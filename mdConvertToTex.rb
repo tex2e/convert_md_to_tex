@@ -16,7 +16,7 @@ $ ruby <this_file.rb> <read_file.md> [-p]
 例:
 	$ ruby mdConvertToTex.rb report.md -p
 	$ ruby ~/Documents/pgm/ruby/texFileConvertWithKramdown/mdConvertToTex.rb 
-		~/Documents/tex/c/enshu15/enshuReport15.md -p
+		~/Documents/tex/test.md -p
 
 # ソースコード (スペース4つ以上のインデント)
 ## 枠のみ
@@ -70,7 +70,7 @@ $$ x = \frac{1}{2} $$
 
 # 画像の埋め込み
 ![画像タイトル(省略可能)](画像のpath)
-:caption 説明 :label ラベル
+:caption 説明 :scale 0.6 :label ラベル
 
 # そのまま出力
 <!-- mdに書いたtexの命令をtexのままにしたいときなどにお使いください -->
