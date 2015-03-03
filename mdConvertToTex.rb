@@ -15,8 +15,7 @@ $ ruby <this_file.rb> <read_file.md> [-p]
 
 例:
 	$ ruby mdConvertToTex.rb report.md -p
-	$ ruby ~/Documents/pgm/ruby/texFileConvertWithKramdown/mdConvertToTex.rb 
-		~/Documents/tex/test.md -p
+	$ ruby ~/Documents/pgm/ruby/mdConvertToTex.rb ~/Documents/tex/test.md -p
 
 # ソースコード (スペース4つ以上のインデント)
 ## 枠のみ
