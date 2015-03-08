@@ -121,127 +121,168 @@ md_str = File.open(read_file_path).read
 latex_str = Kramdown::Document.new(md_str).to_latex
 
 # <!-- --> の中に書いたテキストはそのままtexとして出力
-latex_str.gsub!(/% <!--\s*(.+?)\s*-->(?:\n)?/, '\1')
-
-# code -> itembox + codeの書き換え
-latex_str.gsub!(/^
-	:caption\s+([^:]*)(?::label\s+([^\n]*))?\n
-	\n
-	\\begin{verbatim}
-	(.*?)
-	\\end{verbatim}
-	/mx, 
-	'\begin{itembox}[c]{\1}\begin{verbatim}'+"\n"+
-	'\3\end{verbatim}\end{itembox}'
-)
-
-# code -> listing + codeの書き換え
-# :listing 指定がされたときに変換を行う
-latex_str.gsub!(/^
-	:caption\s+([^:]*)(?::label\s+([^\n]*))?\n
-	:listing\s*\n
-	\n
-	\\begin{verbatim}
-	(.*?)
-	\\end{verbatim}
-	/mx, 
-	'\begin{lstlisting}[caption=\1,label=\2]'+"\n"+
-	'\3\end{lstlisting}'
-)
-
-# code -> listing + code(embed)の書き換え
-# :listing [embed](path) 指定がされたときに変換を行う
-latex_str.gsub!(/^
-	:caption\s+([^:]*)(?::label\s+([^\n]*))?\n
-	:listing\s*\\href{([^}]*)}{embed}
-	/mx, 
-	'\lstinputlisting[caption=\1,label=\2]'+"\n"+
-	'{\3}'
-)
-
-# code -> screenの書き換え
-# 上記3つのcode変換が発生しなかったときにはscreenに変換する
-latex_str.gsub!(/^
-	\n
-	\\begin{verbatim}
-	(.*?)
-	\\end{verbatim}
-	/mx, 
-	'\begin{screen}\begin{verbatim}'+"\n"+
-	'\1'+
-	'\end{verbatim}\end{screen}'
-)
-
-# \section{text}\hypertarget 〜 -> \section
-# Kramdownで変換した際に\hypertargetが余分についてくるので、\hypertargetを削除する
-latex_str.gsub!(/(\\(?:sub)*section{[^}]*})\\hypertarget.*/, '\1')
-
-# longtable -> tableの書き換え
-# captionとlabelも指定できる
-latex_str.gsub!(/
-	(?::caption\s+([^:]*)\n?)?(?::label\s+([^\n]*)\n)?\n
-	\\begin{longtable}{([^}]+)}
-	/x, [
-	'\begin{table}[h]',
-		'\centering',
-		'\caption{\1}',
-		'\label{\2}',
-	'\begin{tabular}{\3}',
-	].join("\n")
-)
-latex_str.gsub!(/
-	\\end{longtable}
-	/x, [
-	'\end{tabular}',
-	'\end{table}',
-	].join("\n")
-)
-
-# displaymath -> eqnarray* の書き換え
-latex_str.gsub!(/\\begin{displaymath}\n\n/, 
-	"\\begin{eqnarray*}\n")
-latex_str.gsub!(/\\end{displaymath}\n/, 
-	"\\end{eqnarray*}\n")
-
-# figure -> figure
-# scaleとlabelも指定できる
-latex_str.gsub!(/
-	\\includegraphics{([^}]*)}\n
-	(?::caption\s+([^:]*)\n?)?(?::scale\s+([^:]*)\n?)?(?::label\s+([^\n]*))?\n
-	/x, [
-	'\begin{figure}[h]', 
-		'\centering', 
-		'\includegraphics[scale=\3]{\1}', 
-		'\caption{\2}', 
-		'\label{\4}', 
-	'\end{figure}',
-	].join("\n") + "\n"
-)
+def convert_keeping_tex_command(latex_str)
+	latex_str.gsub!(/% <!--\s*(.+?)\s*-->(?:\n)?/, '\1')
+	latex_str
+end
 
 # :title -> \title{}
 # タイトルの作成
 # 1. :title ~ をキャプチャする
 # 2. :title ~ を \maketitle に置き換える
 # 3. プリアンブル(preamble)にタイトルを追加
-if latex_str.sub!(/
-	^:title\s+(?<title>.*)\n
-	(^:subtitle\s+(?<subtitle>.*)\n)?
-	(^:author\s+(?<author>.*)\n)?
-	(^:date\s+(?<date>.*)\n)?
-	/x, 
-	"\\maketitle\n\\thispagestyle{empty}\n\\newpage\n\\setcounter{page}{1}\n"
+def convert_title(latex_str)
+	if latex_str.sub!(/
+		^:title\s+(?<title>.*)\n
+		(^:subtitle\s+(?<subtitle>.*)\n)?
+		(^:author\s+(?<author>.*)\n)?
+		(^:date\s+(?<date>.*)\n)?
+		/x, 
+		"\\maketitle\n\\thispagestyle{empty}\n\\newpage\n\\setcounter{page}{1}\n"
+		)
+	then
+		preamble << "\\title{{　}\\\\{　}\\\\{\\Huge #{$~[:title]}}\n"
+		preamble << "\\\\{\\LARGE #{$~[:subtitle]}}\n" if $~[:subtitle]
+		preamble << "\\\\{　}" * 17 + "}\n"
+		preamble << "\\author{\\Large #{$~[:author]}}\n\\date{\\Large #{$~[:date]}}\n"
+	end
+	latex_str
+end
+
+# code -> screenの書き換え
+# :captionなどがないときにはscreenに変換する
+def convert_screen(latex_str)
+	latex_str.gsub!(/^
+		(\n[^:][^\n]*\n)
+		\n
+		\\begin{verbatim}
+		(.*?)
+		\\end{verbatim}
+		/mx, 
+		'\1'+
+		'\begin{screen}\begin{verbatim}'+"\n"+
+		'\2'+
+		'\end{verbatim}\end{screen}'
 	)
-then
-	preamble << "\\title{{　}\\\\{　}\\\\{\\Huge #{$~[:title]}}\n"
-	preamble << "\\\\{\\LARGE #{$~[:subtitle]}}\n" if $~[:subtitle]
-	preamble << "\\\\{　}" * 17 + "}\n"
-	preamble << "\\author{\\Large #{$~[:author]}}\n\\date{\\Large #{$~[:date]}}\n"
+	latex_str
+end
+
+# code -> itembox + codeの書き換え
+def convert_source_code_with_itembox(latex_str)
+	latex_str.gsub!(/^
+		:caption\s+([^:]*)(?::label\s+([^\n]*))?\n
+		\n
+		\\begin{verbatim}
+		(.*?)
+		\\end{verbatim}
+		/mx, 
+		'\begin{itembox}[c]{\1}\begin{verbatim}'+"\n"+
+		'\3\end{verbatim}\end{itembox}'
+	)
+	latex_str
+end
+
+# code -> listing + codeの書き換え
+# :listing 指定がされたときに変換を行う
+def convert_source_code_with_listing(latex_str)
+	latex_str.gsub!(/^
+		:caption\s+([^:]*)(?::label\s+([^\n]*))?\n
+		:listing\s*\n
+		\n
+		\\begin{verbatim}
+		(.*?)
+		\\end{verbatim}
+		/mx, 
+		'\begin{lstlisting}[caption=\1,label=\2]'+"\n"+
+		'\3\end{lstlisting}'
+	)
+	latex_str
+end
+
+# code -> listing + code(embed)の書き換え
+# :listing [embed](path) 指定がされたときに変換を行う
+def convert_embed_source_code_with_listing(latex_str)
+	latex_str.gsub!(/^
+		:caption\s+([^:]*)(?::label\s+([^\n]*))?\n
+		:listing\s*\\href{([^}]*)}{embed}
+		/mx, 
+		'\lstinputlisting[caption=\1,label=\2]'+"\n"+
+		'{\3}'
+	)
+	latex_str
+end
+
+# \section{text}\hypertarget 〜 -> \section
+# Kramdownで変換した際に\hypertargetが余分についてくるので、\hypertargetを削除する
+def convert_removing_hypertarget(latex_str)
+	latex_str.gsub!(/(\\(?:sub)*section{[^}]*})\\hypertarget.*/, '\1')
+	latex_str
+end
+
+# longtable -> tableの書き換え
+# captionとlabelも指定できる
+def convert_table(latex_str)
+	latex_str.gsub!(/
+		(?::caption\s+([^:]*)\n?)?(?::label\s+([^\n]*)\n)?\n
+		\\begin{longtable}{([^}]+)}
+		/x, [
+		'\begin{table}[h]',
+			'\centering',
+			'\caption{\1}',
+			'\label{\2}',
+		'\begin{tabular}{\3}',
+		].join("\n")
+	)
+	latex_str.gsub!(/
+		\\end{longtable}
+		/x, [
+		'\end{tabular}',
+		'\end{table}',
+		].join("\n")
+	)
+	latex_str
+end
+
+# displaymath -> eqnarray* の書き換え
+def convert_eqnarray(latex_str)
+	latex_str.gsub!(/\\begin{displaymath}\n\n/, 
+		"\\begin{eqnarray*}\n")
+	latex_str.gsub!(/\\end{displaymath}\n/, 
+		"\\end{eqnarray*}\n")
+	latex_str
+end
+
+# figure -> figure
+# scaleとlabelも指定できる
+def convert_figure(latex_str)
+	latex_str.gsub!(/
+		\\includegraphics{([^}]*)}\n
+		(?::caption\s+([^:]*)\n?)?(?::scale\s+([^:]*)\n?)?(?::label\s+([^\n]*))?\n
+		/x, [
+		'\begin{figure}[h]', 
+			'\centering', 
+			'\includegraphics[scale=\3]{\1}', 
+			'\caption{\2}', 
+			'\label{\4}', 
+		'\end{figure}',
+		].join("\n") + "\n"
+	)
+	latex_str
 end
 
 # :cmd{} -> \cmd{}
-# バックスラッシュ\から始まるコマンド名
-latex_str.gsub!(/:(\w+)\\\{(.*?)\\\}/, 
-	'\\\\\\1{\2\4}\3')
+# バックスラッシュ\から始まるコマンド名に変換する
+# ただし、行頭から始まる:cmdは無視する
+def convert_command(latex_str)
+	latex_str.gsub!(/(?<!\n):(\w+)\\\{(.*?)\\\}/, 
+		'\\\\\\1{\2\4}\3')
+	latex_str
+end
+
+# convert_から始まる関数を実行
+self.private_methods.grep(/convert_.*/) do |convert_method| 
+	latex_str = self.send convert_method, latex_str
+end
 
 # texファイルに書き込み
 File.open(write_file_path, "w") do |f|
