@@ -170,7 +170,7 @@ end
 # code -> itembox + codeの書き換え
 def convert_source_code_with_itembox(latex_str)
 	latex_str.gsub!(/^
-		:caption\s+([^:]*)(?::label\s+([^\n]*))?\n
+		:caption\s+([^:]*)\n?(?::label\s+([^\n]*))?\n
 		\n
 		\\begin{verbatim}
 		(.*?)
@@ -186,7 +186,7 @@ end
 # :listing 指定がされたときに変換を行う
 def convert_source_code_with_listing(latex_str)
 	latex_str.gsub!(/^
-		:caption\s+([^:]*)(?::label\s+([^\n]*))?\n
+		:caption\s+([^:]*)\n?(?::label\s+([^\n]*))?\n
 		:listing\s*\n
 		\n
 		\\begin{verbatim}
@@ -203,7 +203,7 @@ end
 # :listing [embed](path) 指定がされたときに変換を行う
 def convert_embed_source_code_with_listing(latex_str)
 	latex_str.gsub!(/^
-		:caption\s+([^:]*)(?::label\s+([^\n]*))?\n
+		:caption\s+([^:]*)\n?(?::label\s+([^\n]*))?\n
 		:listing\s*\\href{([^}]*)}{embed}
 		/mx, 
 		'\lstinputlisting[caption=\1,label=\2]'+"\n"+
@@ -297,9 +297,9 @@ if option == "-p"
 	# mdファイルが置いてあるディレクトリ
 	workspace_dir = write_file_path.match(%r{^[/~]?(?:[^/]+/)*})[0]
 	tex_file_path = write_file_path
-	dvi_file_path = write_file_path.sub(/.tex$/, '.dvi')
-	tex_file_name = tex_file_path.match(%r{[^/]+\.tex$})[0]
-	dvi_file_name = dvi_file_path.match(%r{[^/]+\.dvi$})[0]
+	dvi_file_path = write_file_path.sub(/\.tex$/, '.dvi')
+	tex_file_name = tex_file_path.match(/[^/]+\.tex$/)[0]
+	dvi_file_name = dvi_file_path.match(/[^/]+\.dvi$/)[0]
 	file_name = dvi_file_name.sub(/\.dvi/, "")
 
 	puts "#{tex_file_name} -> #{dvi_file_name}"
