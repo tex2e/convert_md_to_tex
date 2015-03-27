@@ -47,6 +47,14 @@
 + `:label` でラベルを付ける
 + `:listing` で行番号と改ページを行う枠に変更する
 
+text
+
+	printf("hello, world");
+
+:text
+
+	printf("hello, world");
+
 :caption ソースコード1
 
 	p "hello world"
