@@ -64,7 +64,7 @@ alpha | beta
 100   | 200
 120   | 240
 
-# 数式  
+# 数式
 $$ x = \frac{1}{2} $$
 
 # 画像の埋め込み
@@ -89,7 +89,7 @@ raise 'argument[0] is not a markdown file as ".md"' unless read_file_path.match(
 write_file_path = read_file_path.sub(/\.md$/, '.tex')
 
 # プリアンブルの設定
-preamble = <<"EOS"
+$preamble = <<"EOS"
 \\documentclass[a4j]{jarticle}
 \\usepackage{amsmath,amssymb} % 数式
 \\usepackage{fancybox,ascmac} % 丸枠
@@ -102,7 +102,7 @@ preamble = <<"EOS"
 \\renewcommand{\\lstlistingname}{リスト}
 \\lstset{
   language=c,
-  basicstyle=\\ttfamily\\normalsize, % コードのフォントと文字サイズ
+  basicstyle=\\ttfamily\\small, % コードのフォントと文字サイズ
   commentstyle=\\textit, % コメント部分のフォント
   classoffset=1,
   keywordstyle=\\bfseries,
@@ -141,10 +141,10 @@ def convert_title(latex_str)
 		"\\maketitle\n\\thispagestyle{empty}\n\\newpage\n\\setcounter{page}{1}\n"
 		)
 	then
-		preamble << "\\title{{　}\\\\{　}\\\\{\\Huge #{$~[:title]}}\n"
-		preamble << "\\\\{\\LARGE #{$~[:subtitle]}}\n" if $~[:subtitle]
-		preamble << "\\\\{　}" * 17 + "}\n"
-		preamble << "\\author{\\Large #{$~[:author]}}\n\\date{\\Large #{$~[:date]}}\n"
+		$preamble << "\\title{{　}\\\\{　}\\\\{\\Huge #{$~[:title]}}\n"
+		$preamble << "\\\\{\\LARGE #{$~[:subtitle]}}\n" if $~[:subtitle]
+		$preamble << "\\\\{　}" * 17 + "}\n"
+		$preamble << "\\author{\\Large #{$~[:author]}}\n\\date{\\Large #{$~[:date]}}\n"
 	end
 	latex_str
 end
@@ -205,7 +205,7 @@ def convert_embed_source_code_with_listing(latex_str)
 	latex_str.gsub!(/^
 		:caption\s+([^:]*)\n?(?::label\s+([^\n]*))?\n
 		:listing\s*\\href{([^}]*)}{embed}
-		/mx, 
+		/mx,
 		'\lstinputlisting[caption=\1,label=\2]'+"\n"+
 		'{\3}'
 	)
@@ -245,10 +245,8 @@ end
 
 # displaymath -> eqnarray* の書き換え
 def convert_eqnarray(latex_str)
-	latex_str.gsub!(/\\begin{displaymath}\n\n/, 
-		"\\begin{eqnarray*}\n")
-	latex_str.gsub!(/\\end{displaymath}\n/, 
-		"\\end{eqnarray*}\n")
+	latex_str.gsub!(/\\begin{displaymath}\n\n/, "\\begin{eqnarray*}\n")
+	latex_str.gsub!(/\\end{displaymath}\n/, "\\end{eqnarray*}\n")
 	latex_str
 end
 
@@ -259,12 +257,12 @@ def convert_figure(latex_str)
 		\\includegraphics{([^}]*)}\n
 		(?::caption\s+([^:]*)\n?)?(?::scale\s+([^:]*)\n?)?(?::label\s+([^\n]*))?\n
 		/x, [
-		'\begin{figure}[h]', 
-			'\centering', 
-			'\includegraphics[scale=\3]{\1}', 
-			'\caption{\2}', 
-			'\label{\4}', 
-		'\end{figure}',
+		'\begin{figure}[h]',
+			'\centering',
+			'\includegraphics[scale=\3]{\1}',
+			'\caption{\2}',
+			'\label{\4}',
+		'\end{figure}'
 		].join("\n") + "\n"
 	)
 	latex_str
@@ -274,7 +272,7 @@ end
 # バックスラッシュ\から始まるコマンド名に変換する
 # ただし、行頭から始まる:cmdは無視する
 def convert_command(latex_str)
-	latex_str.gsub!(/(?<!\n):(\w+)\\\{(.*?)\\\}/, 
+	latex_str.gsub!(/(?<!\n):(\w+)\\\{(.*?)\\\}/,
 		'\\\\\\1{\2\4}\3')
 	latex_str
 end
@@ -285,41 +283,43 @@ self.private_methods.grep(/convert_.*/) do |convert_method|
 end
 
 # texファイルに書き込み
-File.open(write_file_path, "w") do |f|
-	tex_str = "#{preamble}\n\\begin{document}\n#{latex_str}\\end{document}"
+File.open(write_file_path, 'w') do |f|
+	tex_str = "#{$preamble}\n\\begin{document}\n#{latex_str}\\end{document}"
 	f.write tex_str
 end
 
-# -pオプションでpdfに変換する
-if option == "-p"
+# ---------------------------------------------------------------------
+# -pオプションでpdfに変換する（-pが無ければ終了）
+if option == '-p'
 	puts ">> every porcess was excused in #{`pwd`}"
 
-	# mdファイルが置いてあるディレクトリ
-	workspace_dir = write_file_path.match(%r{^[/~]?(?:[^/]+/)*})[0]
-	tex_file_path = write_file_path
-	dvi_file_path = write_file_path.sub(/\.tex$/, '.dvi')
-	tex_file_name = tex_file_path.match(/[^/]+\.tex$/)[0]
-	dvi_file_name = dvi_file_path.match(/[^/]+\.dvi$/)[0]
-	file_name = dvi_file_name.sub(/\.dvi/, "")
+	# mdファイルが置いてあるディレクトリを変数として保存
+	match = write_file_path.match(%r{^([/~]?(?:[^/]+/)*)([-\w\d\.]+?)\.tex})
+	workspace_dir = match[1]
+	file_name     = match[2]
+	tex_file_path = workspace_dir + file_name + '.tex'
+	# dvi_file_path = workspace_dir + file_name + '.dvi'
+	tex_file_name = file_name + '.tex'
+	dvi_file_name = file_name + '.dvi'
 
 	puts "#{tex_file_name} -> #{dvi_file_name}"
 
 	# platexによるコンパイルを行う
 	# コンパイルエラーのときにplatexのプロセスがsleepしてしまうので、threadとして行う
-	platex_result = ""
-	thread = Thread.new do 
-		puts ">> tex compile 1 time"
+	platex_result = ''
+	thread = Thread.new do
+		puts '>> tex compile 1 time'
 		platex_result = `platex --kanji=utf8 #{tex_file_path}`
 	end
 
 	# 3秒待ってもコンパイルが終わらないときはコンパイルエラーが発生したと考えて、threadを終了する
 	unless thread.join(3)
 		puts ">> some thing is wrong with \"#{tex_file_path}\""
-		puts ">> please put this command for check the error"
+		puts '>> please put this command for check the error'
 		print "\nplatex --kanji=utf8 #{tex_file_path}\n\n"
 		exit
 	end
-	
+
 	# コンパイルした際に「LaTeX Warning: label(s) may have changed.」が表示されたときは、再コンパイル
 	n = 1
 	while platex_result.match(
@@ -327,18 +327,19 @@ if option == "-p"
 		puts ">> tex compile #{n += 1} time"
 		platex_result = `platex --kanji=utf8 #{tex_file_path}`
 	end
-	
+
 	# platexによって生成されるdviファイルなどはカレントディレクトリに保存される
 	# dviファイルをpdfファイルに変換する
 	`dvipdfmx -d 5 #{dvi_file_name}`
-	
+
 	# カレントディレクトリにある生成されたファイル(dviやpdfなど)をmdファイルのあるディレクトリに移動させる
 	file_types = %w(aux dvi log pdf)
 	file_types.each do |type|
 		`mv #{file_name}.#{type} #{workspace_dir}`
 	end
-	
 end
+
+
 
 __END__
 
@@ -405,22 +406,22 @@ __END__
 
 :caption 表の説明 :label table:1
 
- Left align | Right align | Center align 
+ Left align | Right align | Center align
 :-----------|------------:|:------------:
- This       | This        | This         
- column     | column      | column       
- will       | will        | will         
- be         | be          | be           
- left       | right       | center       
- aligned    | aligned     | aligned      
+ This       | This        | This
+ column     | column      | column
+ will       | will        | will
+ be         | be          | be
+ left       | right       | center
+ aligned    | aligned     | aligned
 
 
 数式は$$で囲みます
 
 $$
 \frac{\pi}{2}
-= \left( \int_{0}^{\infty} \frac{\sin x}{\sqrt{x}} dx \right)^2 
-= \sum_{k=0}^{\infty} \frac{(2k)!}{2^{2k}(k!)^2} \frac{1}{2k+1} 
+= \left( \int_{0}^{\infty} \frac{\sin x}{\sqrt{x}} dx \right)^2
+= \sum_{k=0}^{\infty} \frac{(2k)!}{2^{2k}(k!)^2} \frac{1}{2k+1}
 = \prod_{k=1}^{\infty} \frac{4k^2}{4k^2 - 1}
 $$
 
