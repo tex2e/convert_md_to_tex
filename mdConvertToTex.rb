@@ -25,7 +25,6 @@ $ ruby <this_file.rb> <read_file.md> [-p]
 		printf("Hello world!");
 	}
 
-
 ## タイトル付きの枠
 :caption タイトル
 
@@ -33,7 +32,6 @@ $ ruby <this_file.rb> <read_file.md> [-p]
 	int main(){
 		printf("Hello world!");
 	}
-
 
 ## 行番号付きの枠
 :caption タイトル :label ラベル
@@ -44,12 +42,10 @@ $ ruby <this_file.rb> <read_file.md> [-p]
 		printf("Hello world!");
 	}
 
-
 ## 行番号付きの枠で、ソースコードのファイル場所を指定
 :caption タイトル :label ラベル
 :listing
 	[embed](~/Documents/pgm/c/test.c)
-
 
 # 箇条書き -+*
 + item1
@@ -76,16 +72,14 @@ $$ x = \frac{1}{2} $$
 
 # コメント
 <!--\if 0 コメント \fi-->
-
 =end
-
 
 # gem install kramdown
 require 'kramdown'
 
 read_file_path, option = ARGV[0], ARGV[1]
-raise 'no argument' if read_file_path.nil?
-raise 'argument[0] is not a markdown file as ".md"' unless read_file_path.match(/\.md$/)
+fail 'no argument' if read_file_path.nil?
+fail 'argument[0] is not a markdown file as ".md"' unless read_file_path.match(/\.md$/)
 write_file_path = read_file_path.sub(/\.md$/, '.tex')
 
 # プリアンブルの設定
@@ -132,19 +126,20 @@ end
 # 2. :title ~ を \maketitle に置き換える
 # 3. プリアンブル(preamble)にタイトルを追加
 def convert_title(latex_str)
-	if latex_str.sub!(/
+	if latex_str.sub!(
+		/
 		^:title\s+(?<title>.*)\n
 		(^:subtitle\s+(?<subtitle>.*)\n)?
 		(^:author\s+(?<author>.*)\n)?
 		(^:date\s+(?<date>.*)\n)?
-		/x, 
+		/x,
 		"\\maketitle\n\\thispagestyle{empty}\n\\newpage\n\\setcounter{page}{1}\n"
-		)
-	then
-		$preamble << "\\title{{　}\\\\{　}\\\\{\\Huge #{$~[:title]}}\n"
-		$preamble << "\\\\{\\LARGE #{$~[:subtitle]}}\n" if $~[:subtitle]
+	)
+		info = $~ # $LAST_MATCH_INFO
+		$preamble << "\\title{{　}\\\\{　}\\\\{\\Huge #{info[:title]}}\n"
+		$preamble << "\\\\{\\LARGE #{info[:subtitle]}}\n" if info[:subtitle]
 		$preamble << "\\\\{　}" * 17 + "}\n"
-		$preamble << "\\author{\\Large #{$~[:author]}}\n\\date{\\Large #{$~[:date]}}\n"
+		$preamble << "\\author{\\Large #{info[:author]}}\n\\date{\\Large #{info[:date]}}\n"
 	end
 	latex_str
 end
@@ -152,16 +147,17 @@ end
 # code -> screenの書き換え
 # :captionなどがないときにはscreenに変換する
 def convert_screen(latex_str)
-	latex_str.gsub!(/^
+	latex_str.gsub!(
+		/^
 		(\n[^:][^\n]*\n)
 		\n
 		\\begin{verbatim}
 		(.*?)
 		\\end{verbatim}
-		/mx, 
-		'\1'+
-		'\begin{screen}\begin{verbatim}'+"\n"+
-		'\2'+
+		/mx,
+		'\1' \
+		'\begin{screen}\begin{verbatim}' + "\n" \
+		'\2' \
 		'\end{verbatim}\end{screen}'
 	)
 	latex_str
@@ -169,14 +165,15 @@ end
 
 # code -> itembox + codeの書き換え
 def convert_source_code_with_itembox(latex_str)
-	latex_str.gsub!(/^
+	latex_str.gsub!(
+		/^
 		:caption\s+([^:]*)\n?(?::label\s+([^\n]*))?\n
 		\n
 		\\begin{verbatim}
 		(.*?)
 		\\end{verbatim}
-		/mx, 
-		'\begin{itembox}[c]{\1}\begin{verbatim}'+"\n"+
+		/mx,
+		'\begin{itembox}[c]{\1}\begin{verbatim}' + "\n" \
 		'\3\end{verbatim}\end{itembox}'
 	)
 	latex_str
@@ -185,15 +182,16 @@ end
 # code -> listing + codeの書き換え
 # :listing 指定がされたときに変換を行う
 def convert_source_code_with_listing(latex_str)
-	latex_str.gsub!(/^
+	latex_str.gsub!(
+		/^
 		:caption\s+([^:]*)\n?(?::label\s+([^\n]*))?\n
 		:listing\s*\n
 		\n
 		\\begin{verbatim}
 		(.*?)
 		\\end{verbatim}
-		/mx, 
-		'\begin{lstlisting}[caption=\1,label=\2]'+"\n"+
+		/mx,
+		'\begin{lstlisting}[caption=\1,label=\2]' + "\n" \
 		'\3\end{lstlisting}'
 	)
 	latex_str
@@ -202,11 +200,12 @@ end
 # code -> listing + code(embed)の書き換え
 # :listing [embed](path) 指定がされたときに変換を行う
 def convert_embed_source_code_with_listing(latex_str)
-	latex_str.gsub!(/^
+	latex_str.gsub!(
+		/^
 		:caption\s+([^:]*)\n?(?::label\s+([^\n]*))?\n
 		:listing\s*\\href{([^}]*)}{embed}
 		/mx,
-		'\lstinputlisting[caption=\1,label=\2]'+"\n"+
+		'\lstinputlisting[caption=\1,label=\2]' + "\n" \
 		'{\3}'
 	)
 	latex_str
@@ -222,23 +221,24 @@ end
 # longtable -> tableの書き換え
 # captionとlabelも指定できる
 def convert_table(latex_str)
-	latex_str.gsub!(/
+	latex_str.gsub!(
+		/
 		(?::caption\s+([^:]*)\n?)?(?::label\s+([^\n]*)\n)?\n
 		\\begin{longtable}{([^}]+)}
-		/x, [
-		'\begin{table}[h]',
+		/x,
+		['\begin{table}[h]',
 			'\centering',
 			'\caption{\1}',
 			'\label{\2}',
-		'\begin{tabular}{\3}',
+		'\begin{tabular}{\3}'
 		].join("\n")
 	)
-	latex_str.gsub!(/
+	latex_str.gsub!(
+		/
 		\\end{longtable}
-		/x, [
-		'\end{tabular}',
-		'\end{table}',
-		].join("\n")
+		/x,
+		'\end{tabular}' + "\n" \
+		'\end{table}'
 	)
 	latex_str
 end
@@ -253,11 +253,12 @@ end
 # figure -> figure
 # scaleとlabelも指定できる
 def convert_figure(latex_str)
-	latex_str.gsub!(/
+	latex_str.gsub!(
+		/
 		\\includegraphics{([^}]*)}\n
 		(?::caption\s+([^:]*)\n?)?(?::scale\s+([^:]*)\n?)?(?::label\s+([^\n]*))?\n
-		/x, [
-		'\begin{figure}[h]',
+		/x,
+		['\begin{figure}[h]',
 			'\centering',
 			'\includegraphics[scale=\3]{\1}',
 			'\caption{\2}',
@@ -272,14 +273,13 @@ end
 # バックスラッシュ\から始まるコマンド名に変換する
 # ただし、行頭から始まる:cmdは無視する
 def convert_command(latex_str)
-	latex_str.gsub!(/(?<!\n):(\w+)\\\{(.*?)\\\}/,
-		'\\\\\\1{\2\4}\3')
+	latex_str.gsub!(/(?<!\n):(\w+)\\\{(.*?)\\\}/, '\\\\\\1{\2\4}\3')
 	latex_str
 end
 
 # convert_から始まる関数を実行
-self.private_methods.grep(/convert_.*/) do |convert_method| 
-	latex_str = self.send convert_method, latex_str
+self.private_methods.grep(/convert_.*/) do |convert_method|
+	latex_str = self.send(convert_method, latex_str)
 end
 
 # texファイルに書き込み
