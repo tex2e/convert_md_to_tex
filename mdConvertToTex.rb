@@ -10,7 +10,7 @@
 $ ruby <this_file> <markdown_file> [-p]
 
 <this_file> はこのrubyのソースファイルのパスです
-<read_file> はmdファイルのパスです
+<markdown_file> はmdファイルのパスです
 このコマンドは md -> tex を行います。
 -p オプションで追加の変換 tex -> pdf も行います
 
@@ -72,7 +72,7 @@ $$ x = \frac{1}{2} $$
 :caption 説明 :scale 0.6 :label ラベル
 
 # そのまま出力
-<!-- mdに書いたtexの命令をtexのままにしたいときなどにお使いください -->
+<!-- mdに書いたtexの命令をtexの命令として実行したいときなどにお使いください -->
 
 # コメント
 <!--\if 0 コメント \fi-->
@@ -93,7 +93,7 @@ markdownと普通の文章の間には必ず空行を入れてください
 def usage
 	puts <<-EOS.gsub(/^\s+\|/, '')
 		|usage: ruby #{$PROGRAM_NAME} <markdown_file> [-p]
-		|   -p  Make pdf file
+		|   -p  make pdf file
 	EOS
 end
 
@@ -411,7 +411,6 @@ end
 
 
 __END__
-
 
 :title Markdown -> Tex [ -> PDF]
 :subtitle markdownの記述例

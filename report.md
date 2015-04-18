@@ -1,13 +1,13 @@
 
-:title Markdown -> Tex [ -> PDF]
+:title Markdown -> TeX [ -> PDF ]
 :subtitle markdownの記述例
-:author TeX2e
+:author @TeX2e
 :date 2015年4月1日
 
 はじめに
 =======
 
-これはMarkdownファイルをtexファイルに変換するためのプログラムです
+これはMarkdownファイルをTeXファイルに変換するためのプログラムです
 
 #見出し1
 
