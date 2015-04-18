@@ -77,26 +77,27 @@ $$ x = \frac{1}{2} $$
 # コメント
 <!--\if 0 コメント \fi-->
 
-* 注意
-	そのまま出力できるのは1行のみです
-	複数行のコメントは以下のように指定してください
-	<!-- \if 0 -->
-	... 複数行のコメント ...
-	<!-- \fi -->
+# 注意
 
-	markdownと普通の文章の間には必ず空行を入れてください
-	前後に空行がない場合はmd形式で書いても、普通の文章として扱います
+そのまま出力できるのは1行のみです
+複数行のコメントは以下のように指定してください
+<!-- \if 0 -->
+... 複数行のコメント ...
+<!-- \fi -->
+
+markdownと普通の文章の間には必ず空行を入れてください
+前後に空行がない場合はmd形式で書いても、普通の文章として扱います
 
 =end
 
 def usage
 	puts <<-EOS.gsub(/^\s+\|/, '')
 		|usage: ruby #{$PROGRAM_NAME} <markdown_file> [-p]
-		|    -p    Make pdf file
+		|   -p  Make pdf file
 	EOS
 end
 
-md_file_path, option = ARGV[0], ARGV[1]
+md_file_path, option = ARGV
 unless md_file_path
 	usage
 	exit
@@ -344,7 +345,6 @@ end
 
 # :cmd{} -> \cmd{}
 # バックスラッシュ\から始まるコマンド名に変換する
-# ただし、行頭から始まる:cmdは無視する
 def convert_command(latex_str)
 	latex_str.gsub!(/:(\w+)\\\{(.*?)\\\}/, '\\\\\\1{\2\4}\3')
 	latex_str
@@ -365,7 +365,7 @@ end
 # -pオプションでpdfに変換する（-pが無ければ終了）
 if option == '-p'
 	# mdファイルが置いてあるディレクトリを変数として保存
-	match = write_file_path.match(%r{^([/~]?(?:[^/]+/)*)([-\w\d\.]+?)\.tex})
+	match = write_file_path.match(%r{^([/~]?(?:[^/]+/)*)([-\w\.]+?)\.tex})
 	workspace_dir = match[1]
 	file_name     = match[2]
 	tex_file_path = workspace_dir + file_name + '.tex'
