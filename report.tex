@@ -2,6 +2,7 @@
 \usepackage{amsmath,amssymb} % 数式
 \usepackage{fancybox,ascmac} % 丸枠
 \usepackage[dvipdfmx]{graphicx} % 図
+\usepackage{verbatim} % ソースコードの埋め込み
 % プログラムリストで使用
 \usepackage{ascmac}
 \usepackage{here}
@@ -10,7 +11,7 @@
 \renewcommand{\lstlistingname}{リスト}
 \lstset{
   language=c,
-  basicstyle=\ttfamily\normalsize, % コードのフォントと文字サイズ
+  basicstyle=\ttfamily\small, % コードのフォントと文字サイズ
   commentstyle=\textit, % コメント部分のフォント
   classoffset=1,
   keywordstyle=\bfseries,
@@ -22,8 +23,18 @@
   numberstyle=\footnotesize,
   tabsize=3 % インデントの深さ（スペースの数）
 }
+\title{{　}\\{　}\\{\Huge Markdown -\textgreater{} Tex [ -\textgreater{} PDF]}
+\\{\LARGE markdownの記述例}
+\\{　}\\{　}\\{　}\\{　}\\{　}\\{　}\\{　}\\{　}\\{　}\\{　}\\{　}\\{　}\\{　}\\{　}\\{　}\\{　}\\{　}}
+\author{\Large TeX2e}
+\date{\Large 2015年4月1日}
 
 \begin{document}
+\maketitle
+\thispagestyle{empty}
+\newpage
+\setcounter{page}{1}
+
 \section{はじめに}
 
 これはMarkdownファイルをtexファイルに変換するためのプログラムです
@@ -46,31 +57,30 @@
 
 \subsection{使用例}
 
-箇条書きには -,+,* が使えます。
+箇条書きには {\tt -,+,*} が使えます。
 リストは 1. のように数字とコロンと1つ以上の空白から始めます。
 
 \begin{itemize}
 \item item1
 \item item2
-\item item3
 
 
 \begin{itemize}
 \item nest1
 \item nest2
 \item nest3
-\end{itemize}
-\item item4
-\item item5
-\end{itemize}
+
 
 \begin{enumerate}
 \item item1
 \item item2
-\item item3
 \item item10
 \item item11
 \end{enumerate}
+\end{itemize}
+\item item3
+\item item4
+\end{itemize}
 
 ソースコードの出力方法
 
@@ -82,19 +92,19 @@
 \item {\tt :listing} で行番号と改ページを行う枠に変更する
 \end{itemize}
 
-text
-\begin{screen}\begin{verbatim}
+出力例
+
+\begin{screen}
+\begin{verbatim}
 printf("hello, world");
-\end{verbatim}\end{screen}
-
-:text
-
-\begin{verbatim}printf("hello, world");
 \end{verbatim}
+\end{screen}
 
-\begin{itembox}[c]{ソースコード1}\begin{verbatim}
+\begin{itembox}[c]{ソースコード1}
+\begin{verbatim}
 p "hello world"
-\end{verbatim}\end{itembox}
+\end{verbatim}
+\end{itembox}
 
 リスト\ref{sample1}に繰り返し処理の例を示します
 
@@ -103,6 +113,15 @@ p "hello world"
 	p i
 end
 \end{lstlisting}
+
+\lstinputlisting[caption=埋め込みの例 ,label=embed1]
+{sample.c}
+
+\begin{itembox}[c]{埋め込みの例2}
+{\small
+\verbatiminput{sample.out}
+}
+\end{itembox}
 
 \begin{table}[h]
 \centering
@@ -133,8 +152,12 @@ aligned & aligned & aligned\\
 
 画像を埋め込む際は {\tt ![]()} を使います
 
-
-\if 0 :caption 画像の説明 :scale 0.6 :label fig:sample1 \fi
+\begin{itembox}[c]{画像埋め込み例}
+\begin{verbatim}
+![](/path/to/image.eps)
+:caption 題名 :scale 大きさ :label ラベル
+\end{verbatim}
+\end{itembox}
 
 ハイフンかアスタリスクを3つ以上並べると水平線が出力されます
 

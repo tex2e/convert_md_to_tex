@@ -7,15 +7,15 @@
 # 使用方法
 
 このファイルをrubyで実行します
-$ ruby <this_file.rb> <read_file.md> [-p]
+$ ruby <this_file> <markdown_file> [-p]
 
-<this_file.rb> はこのrubyのソースファイルのパスです
-<read_file.md> はmdファイルのパスです
--p オプションは md -> tex だけでなく、tex -> pdf も行います
+<this_file> はこのrubyのソースファイルのパスです
+<read_file> はmdファイルのパスです
+このコマンドは md -> tex を行います。
+-p オプションで追加の変換 tex -> pdf も行います
 
 例:
 	$ ruby mdConvertToTex.rb report.md -p
-	$ ruby ~/Documents/pgm/ruby/mdConvertToTex.rb ~/Documents/tex/test.md -p
 
 # ソースコード (スペース4つ以上のインデント)
 ## 枠のみ
@@ -33,6 +33,10 @@ $ ruby <this_file.rb> <read_file.md> [-p]
 		printf("Hello world!");
 	}
 
+## タイトル付きの枠で、ソースコードのファイル場所を指定
+:caption タイトル
+	[embed](/path/to/source)
+
 ## 行番号付きの枠
 :caption タイトル :label ラベル
 :listing
@@ -45,7 +49,7 @@ $ ruby <this_file.rb> <read_file.md> [-p]
 ## 行番号付きの枠で、ソースコードのファイル場所を指定
 :caption タイトル :label ラベル
 :listing
-	[embed](~/Documents/pgm/c/test.c)
+	[embed](/path/to/source)
 
 # 箇条書き -+*
 + item1
@@ -64,7 +68,7 @@ alpha | beta
 $$ x = \frac{1}{2} $$
 
 # 画像の埋め込み
-![画像タイトル(省略可能)](画像のpath)
+![](画像のpath)
 :caption 説明 :scale 0.6 :label ラベル
 
 # そのまま出力
@@ -72,22 +76,41 @@ $$ x = \frac{1}{2} $$
 
 # コメント
 <!--\if 0 コメント \fi-->
+
+* 注意
+	そのまま出力できるのは1行のみです
+	複数行のコメントは以下のように指定してください
+	<!-- \if 0 -->
+	... 複数行のコメント ...
+	<!-- \fi -->
+
+	markdownと普通の文章の間には必ず空行を入れてください
+	前後に空行がない場合はmd形式で書いても、普通の文章として扱います
+
 =end
 
-# gem install kramdown
-require 'kramdown'
+def usage
+	puts <<-EOS.gsub(/^\s+\|/, '')
+		|usage: ruby #{$PROGRAM_NAME} <markdown_file> [-p]
+		|    -p    Make pdf file
+	EOS
+end
 
-read_file_path, option = ARGV[0], ARGV[1]
-fail 'no argument' if read_file_path.nil?
-fail 'argument[0] is not a markdown file as ".md"' unless read_file_path.match(/\.md$/)
-write_file_path = read_file_path.sub(/\.md$/, '.tex')
+md_file_path, option = ARGV[0], ARGV[1]
+unless md_file_path
+	usage
+	exit
+end
+
+write_file_path = md_file_path.sub(/\.[^.]+$/, '.tex')
 
 # プリアンブルの設定
-$preamble = <<"EOS"
+$preamble = <<EOP
 \\documentclass[a4j]{jarticle}
 \\usepackage{amsmath,amssymb} % 数式
 \\usepackage{fancybox,ascmac} % 丸枠
 \\usepackage[dvipdfmx]{graphicx} % 図
+\\usepackage{verbatim} % ソースコードの埋め込み
 % プログラムリストで使用
 \\usepackage{ascmac}
 \\usepackage{here}
@@ -108,10 +131,11 @@ $preamble = <<"EOS"
   numberstyle=\\footnotesize,
   tabsize=3 % インデントの深さ（スペースの数）
 }
-EOS
+EOP
 
 # mdファイルを読み込んで、texの文字列に変換する
-md_str = File.open(read_file_path).read
+require 'kramdown'
+md_str = File.open(md_file_path, &:read)
 latex_str = Kramdown::Document.new(md_str).to_latex
 
 # <!-- --> の中に書いたテキストはそのままtexとして出力
@@ -127,11 +151,11 @@ end
 # 3. プリアンブル(preamble)にタイトルを追加
 def convert_title(latex_str)
 	if latex_str.sub!(
-		/
-		^:title\s+(?<title>.*)\n
-		(^:subtitle\s+(?<subtitle>.*)\n)?
-		(^:author\s+(?<author>.*)\n)?
-		(^:date\s+(?<date>.*)\n)?
+		/^
+			:title\s+(?<title>.*)\n
+			(^:subtitle\s+(?<subtitle>.*)\n)?
+			(^:author\s+(?<author>.*)\n)?
+			(^:date\s+(?<date>.*)\n)?
 		/x,
 		"\\maketitle\n\\thispagestyle{empty}\n\\newpage\n\\setcounter{page}{1}\n"
 	)
@@ -149,16 +173,20 @@ end
 def convert_screen(latex_str)
 	latex_str.gsub!(
 		/^
-		(\n[^:][^\n]*\n)
-		\n
-		\\begin{verbatim}
-		(.*?)
-		\\end{verbatim}
+			(\n[^:][^\n]*\n)
+			\n
+			\\begin{verbatim}
+			(.*?)\n
+			\\end{verbatim}
 		/mx,
-		'\1' \
-		'\begin{screen}\begin{verbatim}' + "\n" \
-		'\2' \
-		'\end{verbatim}\end{screen}'
+		%w(
+			\1
+			\begin{screen}
+			\begin{verbatim}
+			\2
+			\end{verbatim}
+			\end{screen}
+		).join("\n")
 	)
 	latex_str
 end
@@ -167,15 +195,41 @@ end
 def convert_source_code_with_itembox(latex_str)
 	latex_str.gsub!(
 		/^
-		:caption\s+([^:]*)\n?(?::label\s+([^\n]*))?\n
-		\n
-		\\begin{verbatim}
-		(.*?)
-		\\end{verbatim}
+			:caption\s+([^:]*)\n?(?::label\s+([^\n]*))?\n
+			\n
+			\\begin{verbatim}
+			(.*?)\n
+			\\end{verbatim}
 		/mx,
-		'\begin{itembox}[c]{\1}\begin{verbatim}' + "\n" \
-		'\3\end{verbatim}\end{itembox}'
+		%w(
+			\begin{itembox}[c]{\1}
+			\begin{verbatim}
+			\3
+			\end{verbatim}
+			\end{itembox}
+		).join("\n")
 	)
+	puts "In itembox, you cannot set the label \"#{$2}\"" if $2
+	latex_str
+end
+
+# code -> itembox + code(embed)の書き換え
+# [embed](path) が指定されたときに変換を行う
+def convert_embed_source_code(latex_str)
+	latex_str.gsub!(
+		/^
+			:caption\s+([^:]*)\n?(?::label\s+([^\n]*))?\n
+			\s*\\href{([^}]*)}{embed}
+		/mx,
+		%w(
+			\begin{itembox}[c]{\1}
+			{\small
+			\verbatiminput{\3}
+			}
+			\end{itembox}
+		).join("\n")
+	)
+	puts "In itembox, you cannot set the label \"#{$2}\"" if $2
 	latex_str
 end
 
@@ -184,15 +238,18 @@ end
 def convert_source_code_with_listing(latex_str)
 	latex_str.gsub!(
 		/^
-		:caption\s+([^:]*)\n?(?::label\s+([^\n]*))?\n
-		:listing\s*\n
-		\n
-		\\begin{verbatim}
-		(.*?)
-		\\end{verbatim}
+			:caption\s+([^:]*)\n?(?::label\s+([^\n]*))?\n
+			:listing\s*\n
+			\n
+			\\begin{verbatim}
+			(.*?)\n
+			\\end{verbatim}
 		/mx,
-		'\begin{lstlisting}[caption=\1,label=\2]' + "\n" \
-		'\3\end{lstlisting}'
+		%w(
+			\begin{lstlisting}[caption=\1,label=\2]
+			\3
+			\end{lstlisting}
+		).join("\n")
 	)
 	latex_str
 end
@@ -202,11 +259,13 @@ end
 def convert_embed_source_code_with_listing(latex_str)
 	latex_str.gsub!(
 		/^
-		:caption\s+([^:]*)\n?(?::label\s+([^\n]*))?\n
-		:listing\s*\\href{([^}]*)}{embed}
+			:caption\s+([^:]*)\n?(?::label\s+([^\n]*))?\n
+			:listing\s*\\href{([^}]*)}{embed}
 		/mx,
-		'\lstinputlisting[caption=\1,label=\2]' + "\n" \
-		'{\3}'
+		%w(
+			\lstinputlisting[caption=\1,label=\2]
+			{\3}
+		).join("\n")
 	)
 	latex_str
 end
@@ -223,48 +282,62 @@ end
 def convert_table(latex_str)
 	latex_str.gsub!(
 		/
-		(?::caption\s+([^:]*)\n?)?(?::label\s+([^\n]*)\n)?\n
-		\\begin{longtable}{([^}]+)}
+			(?::caption\s+([^:]*)\n?)?(?::label\s+([^\n]*)\n)?\n
+			\\begin{longtable}{([^}]+)}
 		/x,
-		['\begin{table}[h]',
-			'\centering',
-			'\caption{\1}',
-			'\label{\2}',
-		'\begin{tabular}{\3}'
-		].join("\n")
+		%w(
+			\begin{table}[h]
+				\centering
+				\caption{\1}
+				\label{\2}
+			\begin{tabular}{\3}
+		).join("\n")
 	)
 	latex_str.gsub!(
 		/
-		\\end{longtable}
+			\\end{longtable}
 		/x,
-		'\end{tabular}' + "\n" \
-		'\end{table}'
+		%w(
+			\end{tabular}
+			\end{table}
+		).join("\n")
 	)
 	latex_str
 end
 
 # displaymath -> eqnarray* の書き換え
 def convert_eqnarray(latex_str)
-	latex_str.gsub!(/\\begin{displaymath}\n\n/, "\\begin{eqnarray*}\n")
-	latex_str.gsub!(/\\end{displaymath}\n/, "\\end{eqnarray*}\n")
+	latex_str.gsub!(
+		/
+			\\begin{displaymath}\n\n
+			(.*?)\n
+			\\end{displaymath}
+		/mx,
+		%w(
+			\begin{eqnarray*}
+			\1
+			\end{eqnarray*}
+		).join("\n")
+	)
 	latex_str
 end
 
 # figure -> figure
-# scaleとlabelも指定できる
+# caption,scale,labelが指定できる
 def convert_figure(latex_str)
 	latex_str.gsub!(
 		/
-		\\includegraphics{([^}]*)}\n
-		(?::caption\s+([^:]*)\n?)?(?::scale\s+([^:]*)\n?)?(?::label\s+([^\n]*))?\n
+			\\includegraphics{([^}]*)}\n
+			(?::caption\s+([^:]*)\n?)?(?::scale\s+([^:]*)\n?)?(?::label\s+([^\n]*))?
 		/x,
-		['\begin{figure}[h]',
-			'\centering',
-			'\includegraphics[scale=\3]{\1}',
-			'\caption{\2}',
-			'\label{\4}',
-		'\end{figure}'
-		].join("\n") + "\n"
+		%w(
+			\begin{figure}[h]
+				\centering
+				\includegraphics[scale=\3]{\1}
+				\caption{\2}
+				\label{\4}
+			\end{figure}
+		).join("\n")
 	)
 	latex_str
 end
@@ -273,7 +346,7 @@ end
 # バックスラッシュ\から始まるコマンド名に変換する
 # ただし、行頭から始まる:cmdは無視する
 def convert_command(latex_str)
-	latex_str.gsub!(/(?<!\n):(\w+)\\\{(.*?)\\\}/, '\\\\\\1{\2\4}\3')
+	latex_str.gsub!(/:(\w+)\\\{(.*?)\\\}/, '\\\\\\1{\2\4}\3')
 	latex_str
 end
 
@@ -291,8 +364,6 @@ end
 # ---------------------------------------------------------------------
 # -pオプションでpdfに変換する（-pが無ければ終了）
 if option == '-p'
-	puts ">> every porcess was excused in #{`pwd`}"
-
 	# mdファイルが置いてあるディレクトリを変数として保存
 	match = write_file_path.match(%r{^([/~]?(?:[^/]+/)*)([-\w\d\.]+?)\.tex})
 	workspace_dir = match[1]
@@ -304,44 +375,48 @@ if option == '-p'
 
 	puts "#{tex_file_name} -> #{dvi_file_name}"
 
-	# platexによるコンパイルを行う
-	# コンパイルエラーのときにplatexのプロセスがsleepしてしまうので、threadとして行う
-	platex_result = ''
-	thread = Thread.new do
-		puts '>> tex compile 1 time'
-		platex_result = `platex --kanji=utf8 #{tex_file_path}`
-	end
+	n = 1
+	print_compile_time = -> n { ">> tex compile #{n} time" }
 
-	# 3秒待ってもコンパイルが終わらないときはコンパイルエラーが発生したと考えて、threadを終了する
-	unless thread.join(3)
-		puts ">> some thing is wrong with \"#{tex_file_path}\""
-		puts '>> please put this command for check the error'
-		print "\nplatex --kanji=utf8 #{tex_file_path}\n\n"
+	# platexによるコンパイルを行う
+	puts print_compile_time.call(n)
+	platex_result = %x(yes x | platex --kanji=utf8 #{tex_file_path})
+
+	# コンパイルが失敗したら、エラーの内容を出力して終了
+	if platex_result.match(/^\?/)
+		puts platex_result.sub(/(?:[^\n]+|\n[^\n])+\n/, '').gsub(/^\(.*\n/, '')
 		exit
 	end
 
 	# コンパイルした際に「LaTeX Warning: label(s) may have changed.」が表示されたときは、再コンパイル
-	n = 1
 	while platex_result.match(
-		/\n\nLaTeX Warning: Label\(s\) may have changed\. Rerun to get cross-references right\./)
-		puts ">> tex compile #{n += 1} time"
-		platex_result = `platex --kanji=utf8 #{tex_file_path}`
+		"\n\nLaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.")
+		puts print_compile_time.call(n += 1)
+		platex_result = %x(platex --kanji=utf8 #{tex_file_path})
 	end
 
 	# platexによって生成されるdviファイルなどはカレントディレクトリに保存される
 	# dviファイルをpdfファイルに変換する
-	`dvipdfmx -d 5 #{dvi_file_name}`
+	puts %x(dvipdfmx -d 5 #{dvi_file_name})
 
 	# カレントディレクトリにある生成されたファイル(dviやpdfなど)をmdファイルのあるディレクトリに移動させる
-	file_types = %w(aux dvi log pdf)
-	file_types.each do |type|
-		`mv #{file_name}.#{type} #{workspace_dir}`
+	unless workspace_dir.empty?
+		file_types = %w(aux dvi log pdf)
+		file_types.each do |type|
+			%x(mv #{file_name}.#{type} #{workspace_dir})
+		end
 	end
 end
 
 
 
 __END__
+
+
+:title Markdown -> Tex [ -> PDF]
+:subtitle markdownの記述例
+:author TeX2e
+:date 2015年4月1日
 
 はじめに
 =======
@@ -364,23 +439,21 @@ __END__
 
 ##使用例
 
-箇条書きには -,+,* が使えます。
+箇条書きには `-,+,*` が使えます。
 リストは 1. のように数字とコロンと1つ以上の空白から始めます。
 
 - item1
 - item2
-- item3
 	+ nest1
 	+ nest2
 	+ nest3
+		1. item1
+		2. item2
+		10. item10
+		11. item11
+- item3
 - item4
-- item5
 
-1. item1
-2. item2
-3. item3
-10. item10
-11. item11
 
 ソースコードの出力方法
 
@@ -389,6 +462,10 @@ __END__
 + `:caption` でタイトルを付ける
 + `:label` でラベルを付ける
 + `:listing` で行番号と改ページを行う枠に変更する
+
+出力例
+
+	printf("hello, world");
 
 :caption ソースコード1
 
@@ -403,38 +480,46 @@ __END__
 		p i
 	end
 
+:caption 埋め込みの例 :label embed1
+:listing
+	[embed](sample.c)
+
+:caption 埋め込みの例2
+	[embed](sample.out)
 
 :caption 表の説明 :label table:1
 
- Left align | Right align | Center align
+ Left align | Right align | Center align 
 :-----------|------------:|:------------:
- This       | This        | This
- column     | column      | column
- will       | will        | will
- be         | be          | be
- left       | right       | center
- aligned    | aligned     | aligned
-
+ This       | This        | This         
+ column     | column      | column       
+ will       | will        | will         
+ be         | be          | be           
+ left       | right       | center       
+ aligned    | aligned     | aligned      
 
 数式は$$で囲みます
 
 $$
 \frac{\pi}{2}
-= \left( \int_{0}^{\infty} \frac{\sin x}{\sqrt{x}} dx \right)^2
-= \sum_{k=0}^{\infty} \frac{(2k)!}{2^{2k}(k!)^2} \frac{1}{2k+1}
+= \left( \int_{0}^{\infty} \frac{\sin x}{\sqrt{x}} dx \right)^2 
+= \sum_{k=0}^{\infty} \frac{(2k)!}{2^{2k}(k!)^2} \frac{1}{2k+1} 
 = \prod_{k=1}^{\infty} \frac{4k^2}{4k^2 - 1}
 $$
 
-
 画像を埋め込む際は `![]()` を使います
 
-![角括弧内の文章は出力されません](/path/to/test.ps)
-:caption 画像の説明 :scale 0.6 :label fig:sample1
+:caption 画像埋め込み例
 
+	![](/path/to/image.eps)
+	:caption 題名 :scale 大きさ :label ラベル
 
 ハイフンかアスタリスクを3つ以上並べると水平線が出力されます
 
 ---
 
 ****
+
+
+
 

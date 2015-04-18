@@ -1,4 +1,8 @@
 
+:title Markdown -> Tex [ -> PDF]
+:subtitle markdownの記述例
+:author TeX2e
+:date 2015年4月1日
 
 はじめに
 =======
@@ -21,23 +25,20 @@
 
 ##使用例
 
-箇条書きには -,+,* が使えます。
+箇条書きには `-,+,*` が使えます。
 リストは 1. のように数字とコロンと1つ以上の空白から始めます。
 
 - item1
 - item2
-- item3
 	+ nest1
 	+ nest2
 	+ nest3
+		1. item1
+		2. item2
+		10. item10
+		11. item11
+- item3
 - item4
-- item5
-
-1. item1
-2. item2
-3. item3
-10. item10
-11. item11
 
 ソースコードの出力方法
 
@@ -47,11 +48,7 @@
 + `:label` でラベルを付ける
 + `:listing` で行番号と改ページを行う枠に変更する
 
-text
-
-	printf("hello, world");
-
-:text
+出力例
 
 	printf("hello, world");
 
@@ -68,6 +65,12 @@ text
 		p i
 	end
 
+:caption 埋め込みの例 :label embed1
+:listing
+	[embed](sample.c)
+
+:caption 埋め込みの例2
+	[embed](sample.out)
 
 :caption 表の説明 :label table:1
 
@@ -90,12 +93,12 @@ $$
 = \prod_{k=1}^{\infty} \frac{4k^2}{4k^2 - 1}
 $$
 
-
 画像を埋め込む際は `![]()` を使います
 
-![角括弧内の文章は出力されません]()
-<!--\if 0 :caption 画像の説明 :scale 0.6 :label fig:sample1 \fi-->
+:caption 画像埋め込み例
 
+	![](/path/to/image.eps)
+	:caption 題名 :scale 大きさ :label ラベル
 
 ハイフンかアスタリスクを3つ以上並べると水平線が出力されます
 
