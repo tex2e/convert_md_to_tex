@@ -5,16 +5,18 @@
 :date 2015/4/1
 
 <!-- \if 0 -->
+
 :preamble
 	`\def\lstlistingname{List}`
 	`\def\tablename{Table}`
+	
 <!-- \fi -->
 
 Overview
 =======
 
 これはMarkdownファイルをTeXファイルに変換するためのrubyスクリプトです。
-rubyが実行できる環境と、gemの``kramdown''が必要です。
+rubyが実行できる環境と、gemの"kramdown"が必要です。
 
 # Usage
 

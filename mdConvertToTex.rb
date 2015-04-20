@@ -1,8 +1,7 @@
 
 =begin
 
-これはmarkdown記法のファイルを読み込んで、tex形式に変換したファイルを出力します
-以下はmarkdownを略してmdと書きます
+これはmarkdown(md)記法のファイルを読み込んで、tex形式に変換したファイルを出力します
 
 # 使用方法
 
@@ -89,7 +88,9 @@ $$ x = \frac{1}{2} $$
 そのまま出力できるのは1行のみです
 複数行のコメントは以下のように指定してください
 <!-- \if 0 -->
+
 ... 複数行のコメント ...
+
 <!-- \fi -->
 
 markdownと普通の文章の間には必ず空行を入れてください
@@ -114,7 +115,7 @@ write_file_path = md_file_path.sub(/\.[^.]+$/, '.tex')
 
 # プリアンブルの設定
 $preamble = <<EOP
-\\documentclass[a4j]{jarticle}
+\\documentclass[a4j, titlepage]{jarticle}
 \\usepackage{amsmath,amssymb} % 数式
 \\usepackage{fancybox,ascmac} % 丸枠
 \\usepackage[dvipdfmx]{graphicx} % 図
@@ -168,10 +169,13 @@ def convert_title(latex_str)
 		"\\maketitle\n\\thispagestyle{empty}\n\\newpage\n\\setcounter{page}{1}\n"
 	)
 		info = $~ # $LAST_MATCH_INFO
-		$preamble << "\\title{{　}\\\\{　}\\\\{\\Huge #{info[:title]}}\n"
-		$preamble << "\\\\{\\LARGE #{info[:subtitle]}}\n" if info[:subtitle]
-		$preamble << "\\\\{　}" * 17 + "}\n"
-		$preamble << "\\author{\\Large #{info[:author]}}\n\\date{\\Large #{info[:date]}}\n"
+		subtitle = info[:subtitle] ? "\\\\{\\LARGE #{info[:subtitle]}}" : ""
+
+		$preamble << [
+			"\\title{ \\Huge #{info[:title]} #{subtitle}}",
+			"\\author{ \\Large #{info[:author]} }",
+			"\\date{ \\Large #{info[:date]} }",
+		].join("\n") + "\n"
 	end
 	latex_str
 end
@@ -399,7 +403,7 @@ if option == '-p'
 
 	# コンパイルが失敗したら、エラーの内容を出力して終了
 	if platex_result.match(/^\?/)
-		puts platex_result.sub(/(?:[^\n]+|\n[^\n])+\n/, '').gsub(/^\(.*\n/, '')
+		puts platex_result#.sub(/(?:[^\n]+|\n[^\n])+\n/, '').gsub(/^\(.*\n/, '')
 		exit
 	end
 

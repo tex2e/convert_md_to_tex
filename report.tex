@@ -1,4 +1,4 @@
-\documentclass[a4j]{jarticle}
+\documentclass[a4j, titlepage]{jarticle}
 \usepackage{amsmath,amssymb} % 数式
 \usepackage{fancybox,ascmac} % 丸枠
 \usepackage[dvipdfmx]{graphicx} % 図
@@ -23,11 +23,9 @@
   numberstyle=\footnotesize,
   tabsize=3 % インデントの深さ（スペースの数）
 }
-\title{{　}\\{　}\\{\Huge Markdown -\textgreater{} TeX [ -\textgreater{} PDF ]}
-\\{\LARGE markdownの記述例}
-\\{　}\\{　}\\{　}\\{　}\\{　}\\{　}\\{　}\\{　}\\{　}\\{　}\\{　}\\{　}\\{　}\\{　}\\{　}\\{　}\\{　}}
-\author{\Large @TeX2e}
-\date{\Large 2015/4/1}
+\title{ \Huge Markdown -\textgreater{} TeX [ -\textgreater{} PDF ] \\{\LARGE markdownの記述例}}
+\author{ \Large @TeX2e }
+\date{ \Large 2015/4/1 }
 
 \begin{document}
 \maketitle
@@ -35,15 +33,16 @@
 \newpage
 \setcounter{page}{1}
 
-\if 0:preamble
+\if 0
+:preamble
 	{\tt \textbackslash{}def\textbackslash{}lstlistingname\{List\}}
 	{\tt \textbackslash{}def\textbackslash{}tablename\{Table\}}
-\fi
 
+\fi
 \section{Overview}
 
 これはMarkdownファイルをTeXファイルに変換するためのrubyスクリプトです。
-rubyが実行できる環境と、gemの``kramdown'{}`が必要です。
+rubyが実行できる環境と、gemの''kramdown''が必要です。
 
 \section{Usage}
 
