@@ -5,7 +5,8 @@
 # 使い方
 
 このファイルをrubyで実行します
-$ ruby <this_file> <markdown_file> [-p]
+	
+	$ ruby <this_file> <markdown_file> [-p]
 
 <this_file> はこのrubyのソースファイルのパスです
 <markdown_file> はmdファイルのパスです
