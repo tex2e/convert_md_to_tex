@@ -2,45 +2,104 @@
 :title Markdown -> TeX [ -> PDF ]
 :subtitle markdownの記述例
 :author @TeX2e
-:date 2015年4月1日
+:date 2015/4/1
 
-はじめに
+<!-- \if 0 -->
+:preamble
+	`\def\lstlistingname{List}`
+	`\def\tablename{Table}`
+<!-- \fi -->
+
+Overview
 =======
 
-これはMarkdownファイルをTeXファイルに変換するためのプログラムです
+これはMarkdownファイルをTeXファイルに変換するためのrubyスクリプトです。
+rubyが実行できる環境と、gemの``kramdown''が必要です。
 
-#見出し1
+# Usage
 
-##見出し2
+	ruby <this_script> <md_file> [-p]
 
-###見出し3
+# Structural Elements
 
-##変換できること
++ Headers
++ Lists
++ Code Blocks
++ Tables
++ Math Blocks
++ Images
 
-+ 箇条書き
-+ ソースコード（枠で囲むなど）
-+ 表
-+ 数式
-+ 画像の埋め込み
+# Markdown Syntax
 
-##使用例
+## Headers
+
+見出しは `#` を使って表します。
+
+:caption 見出しの例
+
+	# First level header
+
+	## Second level header
+
+	### Third level header
+
+## (Un)Ordered Lists
 
 箇条書きには `-,+,*` が使えます。
-リストは 1. のように数字とコロンと1つ以上の空白から始めます。
+リストは `1.` のように数字とコロンと1つ以上の空白をリストの先頭に付けます。
+
+:caption list example
+
+	- item1
+	- item2
+	- item3
+
+    1. item1
+    2. item2
+    3. item3
+
+<!-- \if 0 -->
 
 - item1
 - item2
 	+ nest1
 	+ nest2
-	+ nest3
-		1. item1
-		2. item2
-		10. item10
-		11. item11
-- item3
-- item4
+		* deep nest1
+		* deep nest2
 
-ソースコードの出力方法
+1. item1
+2. item2
+	1. nest1
+	2. nest2
+		1. deep nest1
+		2. deep nest2
+
+<!-- \fi -->
+
+## Definition Lists
+
+定義の次の行に `:` があれば、定義とその説明を書くことができます。
+
+:caption definition list example
+
+	def1
+	: description
+
+	def2
+	: description
+
+Laziness
+: The quality that makes you go to great effort to reduce overall energy expenditure. It makes you write labor-saving programs that other people will find useful, and document what you wrote so you don't have to answer so many questions about it. Hence, the first great virtue of a programmer.
+
+Impatience
+: The anger you feel when the computer is being lazy. This makes you write programs that don't just react to your needs, but actually anticipate them. Or at least that pretend to. Hence, the second great virtue of a programmer.
+
+Hubris
+: Excessive pride, the sort of thing Zeus zaps you for. Also the quality that makes you write (and maintain) programs that other people won't want to say bad things about. Hence, the third great virtue of a programmer.
+
+## Code Blocks
+
+ソースコードを出力する方法
 
 + ソースコードの前後に1つ以上の空行を置く
 + 4つ以上のインデントまたは1つ以上のタブを置く
@@ -48,31 +107,94 @@
 + `:label` でラベルを付ける
 + `:listing` で行番号と改ページを行う枠に変更する
 
-出力例
+ソースコードは、丸枠で囲むか、行番号付きの枠で囲むかの2通りの選択肢があります。
+
+丸枠を使う方法は3通りあります。
+
+:caption タイトルなしの枠
+
+	　
+	    printf("hello, world");
+	　
+
+:caption 丸枠の例
+
+	:caption <caption>
+
+	    printf("hello, world");
+	　
+
+:caption 埋め込みの例
+
+	:caption <caption>
+	    [embed](/path/to/source.c)
+	　
+
+行番号付きの枠を使う方法は2通りあります。
+
+:caption 行番号付きの枠
+
+	:caption <caption> :label <label>
+	:listing
+
+	    (1..10).each do |i|
+	        p i
+	    end
+	　
+
+:caption 埋め込みの例
+
+	:caption <caption> :label <label>
+	:listing
+	    [embed](/path/to/source.c)
+	　
+
+行番号付きの枠の場合、`:``ref{<label>}` で参照を行うことができます。
+
+### Samples
+
+以下に出力例を示します。
 
 	printf("hello, world");
 
-:caption ソースコード1
+:caption hello, world
 
-	p "hello world"
+	printf("hello, world");
 
-リスト:ref{sample1}に繰り返し処理の例を示します
+:caption embed
+	[embed](./sample.c)
 
-:caption 繰り返しの例 :label sample1
+:caption iterate :label list:1
 :listing
 
 	(1..10).each do |i|
 		p i
 	end
 
-:caption 埋め込みの例 :label embed1
+:caption embed in list :label list:2
 :listing
-	[embed](sample.c)
+	[embed](./sample.c)
 
-:caption 埋め込みの例2
-	[embed](sample.out)
+list:ref{list:2} shows ...
 
-:caption 表の説明 :label table:1
+## Tables
+
+表は、仕切りに `-` と `|` を使って表します
+
+:caption table example
+
+	:caption <caption> :label <label>
+
+	 colum1     | colum2      | colum3
+	:-----------|------------:|:------------:
+	 This       | This        | This         
+	 column     | column      | column       
+	 will       | will        | will         
+	 be         | be          | be           
+	 left       | right       | center       
+	 aligned    | aligned     | aligned   
+
+:caption table sample :label table:1
 
  Left align | Right align | Center align 
 :-----------|------------:|:------------:
@@ -83,8 +205,22 @@
  left       | right       | center       
  aligned    | aligned     | aligned      
 
+table:ref{table:1} shows ...
+
+## Math Blocks
 
 数式は$$で囲みます
+
+:caption 数式の例
+
+	$$ inline math block $$
+
+	$$
+	multiline math block
+	$$
+
+解の公式は $$ x = \frac{-b\pm\sqrt{b^2-4ac}}{2a} $$ で表せます。
+式 $$ \sum_{n = 1}^{\infty} \frac{1}{n} $$ の収束値を求めます。
 
 $$
 \frac{\pi}{2}
@@ -93,16 +229,21 @@ $$
 = \prod_{k=1}^{\infty} \frac{4k^2}{4k^2 - 1}
 $$
 
+## Images
+
 画像を埋め込む際は `![]()` を使います
 
 :caption 画像埋め込み例
 
 	![](/path/to/image.eps)
-	:caption 題名 :scale 大きさ :label ラベル
+	:caption <caption> :scale <scale> :label <label>
+
+## Horizontal Rules
 
 ハイフンかアスタリスクを3つ以上並べると水平線が出力されます
 
 ---
 
 ****
+
 

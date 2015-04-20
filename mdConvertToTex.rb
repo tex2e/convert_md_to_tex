@@ -56,6 +56,13 @@ $ ruby <this_file> <markdown_file> [-p]
 + item2
 + item3
 
+# 定義 :
+def1
+: description1
+
+def2
+: description2
+
 # 表の作成
 :caption 説明 :label ラベル
 
@@ -275,6 +282,14 @@ end
 # Kramdownで変換した際に\hypertargetが余分についてくるので、\hypertargetを削除する
 def convert_removing_hypertarget(latex_str)
 	latex_str.gsub!(/(\\(?:sub)*section{[^}]*})\\hypertarget.*/, '\1')
+	latex_str
+end
+
+# def -> def + \n
+# 定義の後に改行を加える
+# 正確には \item[*] の後に \mbox{}\\ を追加する
+def convert_adding_newline_to_definition_list(latex_str)
+	latex_str.gsub!(/\\item\[[^\]]+\]/, '\0\mbox{}\\\\\\\\')
 	latex_str
 end
 
