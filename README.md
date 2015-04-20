@@ -10,11 +10,6 @@
 
 <this_file> はこのrubyのソースファイルのパスです
 <markdown_file> はmdファイルのパスです
-このコマンドは md -> tex を行います。
+このプログラムは md -> tex を行います。
 -p オプションで追加の変換 tex -> pdf も行います
-
-例:
-
-	$ ruby mdConvertToTex.rb report.md -p
-
 
