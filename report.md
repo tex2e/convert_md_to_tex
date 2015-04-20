@@ -1,35 +1,50 @@
 
 :title Markdown -> TeX [ -> PDF ]
-:subtitle markdownの記述例
+:subtitle How to write extended markdown and convert to TeX
 :author @TeX2e
 :date 2015/4/1
 
-<!-- \if 0 -->
+{::comment}
+実装予定
+:preamble do - end で、preambleに追加する項目を設定する
 
-:preamble
+:preamble do
 	`\def\lstlistingname{List}`
 	`\def\tablename{Table}`
-
-<!-- \fi -->
+:end
+{:/comment}
 
 Overview
 =======
 
 これはMarkdownファイルをTeXファイルに変換するためのrubyスクリプトです。
-rubyが実行できる環境と、gemの"kramdown"が必要です。
 
 # Requirements
 
-- Rubyの実行環境
-- gemの"kramdown"を使用
+You need to install gem ``kramdown"
+
+	$ gem install kramdown
+
+Or add this line to your Gemfile:
+
+	gem 'kramdown'
+
+then enter `bundle` command to install ``kramdown"
 
 # Usage
 
-次のコマンドを入力します
+enter the following commands:
 
 	$ ruby <this_script> <md_file> [-p]
 
+`<this_script>`
+: mdをtexに変換するスクリプトのファイル名
 
+`<md_file>`
+: 変換元となるmarkdownファイル
+
+`-p`
+: texに変換した後、pdfに変換するオプション
 
 # Structural Elements
 
@@ -46,7 +61,7 @@ rubyが実行できる環境と、gemの"kramdown"が必要です。
 
 見出しは `#` を使って表します。
 
-:caption 見出しの例
+:caption headers example
 
 	# First level header
 
@@ -69,7 +84,7 @@ rubyが実行できる環境と、gemの"kramdown"が必要です。
     2. item2
     3. item3
 
-<!-- \if 0 -->
+Output:
 
 - item1
 - item2
@@ -77,6 +92,10 @@ rubyが実行できる環境と、gemの"kramdown"が必要です。
 	+ nest2
 		* deep nest1
 		* deep nest2
+- item3
+- item4
+
+----
 
 1. item1
 2. item2
@@ -84,8 +103,8 @@ rubyが実行できる環境と、gemの"kramdown"が必要です。
 	2. nest2
 		1. deep nest1
 		2. deep nest2
-
-<!-- \fi -->
+3. item3
+4. item4
 
 ## Definition Lists
 
@@ -98,6 +117,8 @@ rubyが実行できる環境と、gemの"kramdown"が必要です。
 
 	def2
 	: description
+
+Output:
 
 Laziness
 : The quality that makes you go to great effort to reduce overall energy expenditure. It makes you write labor-saving programs that other people will find useful, and document what you wrote so you don't have to answer so many questions about it. Hence, the first great virtue of a programmer.
@@ -120,13 +141,21 @@ Hubris
 
 ソースコードは、丸枠で囲むか、行番号付きの枠で囲むかの2通りの選択肢があります。
 
-丸枠を使う方法は3通りあります。
+コードを説明なしの丸枠で囲む場合は、前後に何も書きません。
 
-:caption タイトルなしの枠
+:caption without caption
 
 	　
 	    printf("hello, world");
 	　
+
+Output:
+
+	printf("hello, world");
+
+----
+
+コードを丸枠で囲む場合は、コードから2行上に `:caption` から始まる行を書きます。
 
 :caption 丸枠の例
 
@@ -135,13 +164,32 @@ Hubris
 	    printf("hello, world");
 	　
 
-:caption 埋め込みの例
+Output:
+
+:caption hello, world
+
+	printf("hello, world");
+
+----
+
+丸枠に外部ファイルのコードを埋め込む場合は、`:caption` の次の行に、`[embed](<path>)` を書きます。
+
+:caption example to embed code
 
 	:caption <caption>
 	    [embed](/path/to/source.c)
 	　
 
-行番号付きの枠を使う方法は2通りあります。
+Output:
+
+:caption embed test
+	[embed](./sample.c)
+
+----
+
+行番号付きの枠（リスト）を使う方法は2通りあります。
+
+コードをリストにする場合は、コードから3行上に `:caption` と `:label`を書き、2行上に `:listing` を書きます。
 
 :caption 行番号付きの枠
 
@@ -152,29 +200,9 @@ Hubris
 	        p i
 	    end
 	　
-
-:caption 埋め込みの例
-
-	:caption <caption> :label <label>
-	:listing
-	    [embed](/path/to/source.c)
-	　
-
-行番号付きの枠の場合、`:``ref{<label>}` で参照を行うことができます。
-
-### Samples
-
-以下に出力例を示します。
-
-	printf("hello, world");
-
-:caption hello, world
-
-	printf("hello, world");
-
-:caption embed
-	[embed](./sample.c)
-
+	
+Output:
+　
 :caption iterate :label list:1
 :listing
 
@@ -182,15 +210,32 @@ Hubris
 		p i
 	end
 
-:caption embed in list :label list:2
+----
+
+リストに外部ファイルのコードを埋め込む場合は、`:listing` の次の行に、`[embed](<path>)` を書きます。
+
+:caption example to embed code in listing
+
+	:caption <caption> :label <label>
+	:listing
+	    [embed](/path/to/source.c)
+	　
+
+Output:
+
+:caption embed in listing :label list:2
 :listing
 	[embed](./sample.c)
 
-list:ref{list:2} shows ...
+----
+
+リストの場合、`:``ref{<label>}` で参照を行うことができます。
+
+List :ref{list:2} shows ...
 
 ## Tables
 
-表は、仕切りに `-` と `|` を使って表します
+To display table, we use pipe `|` and minus `-`
 
 :caption table example
 
@@ -216,19 +261,25 @@ list:ref{list:2} shows ...
  left       | right       | center       
  aligned    | aligned     | aligned      
 
-table:ref{table:1} shows ...
+
+表の場合、`:``ref{<label>}` で参照を行うことができます。
+
+Table :ref{table:1} shows ...
 
 ## Math Blocks
 
 数式は$$で囲みます
 
-:caption 数式の例
+:caption equation example
 
 	$$ inline math block $$
 
 	$$
 	multiline math block
 	$$
+
+
+Output:
 
 解の公式は $$ x = \frac{-b\pm\sqrt{b^2-4ac}}{2a} $$ で表せます。
 式 $$ \sum_{n = 1}^{\infty} \frac{1}{n} $$ の収束値を求めます。
@@ -244,17 +295,66 @@ $$
 
 画像を埋め込む際は `![]()` を使います
 
-:caption 画像埋め込み例
+:caption example of displaying an image
 
 	![](/path/to/image.eps)
 	:caption <caption> :scale <scale> :label <label>
 
 ## Horizontal Rules
 
-ハイフンかアスタリスクを3つ以上並べると水平線が出力されます
+ハイフンかアスタリスクを4つ以上並べると水平線が出力されます
 
----
+:caption horizontal rules example
+
+	----
+
+	****
+
+Output:
+
+----
 
 ****
+
+## Blockquotes
+
+:caption blockquotes example
+
+	> This is a blockquote
+	> on multiple line
+	> but it looks one line
+
+Output:
+
+This is para text.
+
+> This is a blockquote
+> on multiple line
+> but it looks one line
+
+List work in blockquotes
+
+> This is a blockquote
+> * list work
+> * item1
+> * item2
+
+## Footnotes
+
+This is some text.[^1]. Other text.[^footnote].
+
+[^1]: This is *italic* footnote.
+
+[^footnote]:
+	You can use blockquotes.
+
+	> Blockquotes can be in a footnote.
+
+
+{::comment}
+This text is completely ignored by kramdown - a comment in the text.
+{:/comment}
+
+
 
 

@@ -24,7 +24,7 @@
   numberstyle=\footnotesize,
   tabsize=3 % インデントの深さ（スペースの数）
 }
-\title{ \Huge Markdown -\textgreater{} TeX [ -\textgreater{} PDF ] \\{\LARGE markdownの記述例}}
+\title{ \Huge Markdown -\textgreater{} TeX [ -\textgreater{} PDF ] \\{\LARGE How to write extended markdown and convert to TeX} }
 \author{ \Large @TeX2e }
 \date{ \Large 2015/4/1 }
 
@@ -34,33 +34,59 @@
 \newpage
 \setcounter{page}{1}
 
-\if 0
-:preamble
-	{\tt \textbackslash{}def\textbackslash{}lstlistingname\{List\}}
-	{\tt \textbackslash{}def\textbackslash{}tablename\{Table\}}
+% 実装予定
+% :preamble do - end で、preambleに追加する項目を設定する
+% 
+% :preamble do
+% 	`\def\lstlistingname{List}`
+% 	`\def\tablename{Table}`
+% :end
 
-\fi
 \section{Overview}
 
 これはMarkdownファイルをTeXファイルに変換するためのrubyスクリプトです。
-rubyが実行できる環境と、gemの''kramdown''が必要です。
 
 \section{Requirements}
 
-\begin{itemize}
-\item Rubyの実行環境
-\item gemの''kramdown''を使用
-\end{itemize}
+You need to install gem ``kramdown''
+
+\begin{screen}
+\begin{verbatim}
+$ gem install kramdown
+\end{verbatim}
+\end{screen}
+
+Or add this line to your Gemfile:
+
+\begin{screen}
+\begin{verbatim}
+gem 'kramdown'
+\end{verbatim}
+\end{screen}
+
+then enter {\tt bundle} command to install ``kramdown''
 
 \section{Usage}
 
-次のコマンドを入力します
+enter the following commands:
 
 \begin{screen}
 \begin{verbatim}
 $ ruby <this_script> <md_file> [-p]
 \end{verbatim}
 \end{screen}
+
+\begin{description}
+\item[{\tt \textless{}this\_script\textgreater{}}]\mbox{}\\ mdをtexに変換するスクリプトのファイル名
+
+
+
+\item[{\tt \textless{}md\_file\textgreater{}}]\mbox{}\\ 変換元となるmarkdownファイル
+
+
+
+\item[{\tt -p}]\mbox{}\\ texに変換した後、pdfに変換するオプション
+\end{description}
 
 \section{Structural Elements}
 
@@ -79,7 +105,7 @@ $ ruby <this_script> <md_file> [-p]
 
 見出しは {\tt \#} を使って表します。
 
-\begin{itembox}[c]{見出しの例}
+\begin{itembox}[c]{headers example}
 \begin{verbatim}
 # First level header
 
@@ -106,7 +132,8 @@ $ ruby <this_script> <md_file> [-p]
 \end{verbatim}
 \end{itembox}
 
-\if 0
+Output:
+
 \begin{itemize}
 \item item1
 \item item2
@@ -122,7 +149,13 @@ $ ruby <this_script> <md_file> [-p]
 \item deep nest2
 \end{itemize}
 \end{itemize}
+\item item3
+\item item4
 \end{itemize}
+
+\begin{center}
+\rule{3in}{0.4pt}
+\end{center}
 
 \begin{enumerate}
 \item item1
@@ -139,9 +172,10 @@ $ ruby <this_script> <md_file> [-p]
 \item deep nest2
 \end{enumerate}
 \end{enumerate}
+\item item3
+\item item4
 \end{enumerate}
 
-\fi
 \subsection{Definition Lists}
 
 定義の次の行に {\tt :} があれば、定義とその説明を書くことができます。
@@ -155,6 +189,8 @@ def2
 : description
 \end{verbatim}
 \end{itembox}
+
+Output:
 
 \begin{description}
 \item[Laziness]\mbox{}\\ The quality that makes you go to great effort to reduce overall energy expenditure. It makes you write labor-saving programs that other people will find useful, and document what you wrote so you don't have to answer so many questions about it. Hence, the first great virtue of a programmer.
@@ -182,15 +218,29 @@ def2
 
 ソースコードは、丸枠で囲むか、行番号付きの枠で囲むかの2通りの選択肢があります。
 
-丸枠を使う方法は3通りあります。
+コードを説明なしの丸枠で囲む場合は、前後に何も書きません。
 
-\begin{itembox}[c]{タイトルなしの枠}
+\begin{itembox}[c]{without caption}
 \begin{verbatim}
 　
     printf("hello, world");
 　
 \end{verbatim}
 \end{itembox}
+
+Output:
+
+\begin{screen}
+\begin{verbatim}
+printf("hello, world");
+\end{verbatim}
+\end{screen}
+
+\begin{center}
+\rule{3in}{0.4pt}
+\end{center}
+
+コードを丸枠で囲む場合は、コードから2行上に {\tt :caption} から始まる行を書きます。
 
 \begin{itembox}[c]{丸枠の例}
 \begin{verbatim}
@@ -201,7 +251,21 @@ def2
 \end{verbatim}
 \end{itembox}
 
-\begin{itembox}[c]{埋め込みの例}
+Output:
+
+\begin{itembox}[c]{hello, world}
+\begin{verbatim}
+printf("hello, world");
+\end{verbatim}
+\end{itembox}
+
+\begin{center}
+\rule{3in}{0.4pt}
+\end{center}
+
+丸枠に外部ファイルのコードを埋め込む場合は、{\tt :caption} の次の行に、{\tt [embed](\textless{}path\textgreater{})} を書きます。
+
+\begin{itembox}[c]{example to embed code}
 \begin{verbatim}
 :caption <caption>
     [embed](/path/to/source.c)
@@ -209,7 +273,21 @@ def2
 \end{verbatim}
 \end{itembox}
 
-行番号付きの枠を使う方法は2通りあります。
+Output:
+
+\begin{itembox}[c]{embed test}
+{\small
+\verbatiminput{./sample.c}
+}
+\end{itembox}
+
+\begin{center}
+\rule{3in}{0.4pt}
+\end{center}
+
+行番号付きの枠（リスト）を使う方法は2通りあります。
+
+コードをリストにする場合は、コードから3行上に {\tt :caption} と {\tt :label}を書き、2行上に {\tt :listing} を書きます。
 
 \begin{itembox}[c]{行番号付きの枠}
 \begin{verbatim}
@@ -223,7 +301,21 @@ def2
 \end{verbatim}
 \end{itembox}
 
-\begin{itembox}[c]{埋め込みの例}
+Output:
+　
+\begin{lstlisting}[caption=iterate ,label=list:1]
+(1..10).each do |i|
+	p i
+end
+\end{lstlisting}
+
+\begin{center}
+\rule{3in}{0.4pt}
+\end{center}
+
+リストに外部ファイルのコードを埋め込む場合は、{\tt :listing} の次の行に、{\tt [embed](\textless{}path\textgreater{})} を書きます。
+
+\begin{itembox}[c]{example to embed code in listing}
 \begin{verbatim}
 :caption <caption> :label <label>
 :listing
@@ -232,44 +324,22 @@ def2
 \end{verbatim}
 \end{itembox}
 
-行番号付きの枠の場合、{\tt :}{\tt ref\{\textless{}label\textgreater{}\}} で参照を行うことができます。
+Output:
 
-\subsubsection{Samples}
-
-以下に出力例を示します。
-
-\begin{screen}
-\begin{verbatim}
-printf("hello, world");
-\end{verbatim}
-\end{screen}
-
-\begin{itembox}[c]{hello, world}
-\begin{verbatim}
-printf("hello, world");
-\end{verbatim}
-\end{itembox}
-
-\begin{itembox}[c]{embed}
-{\small
-\verbatiminput{./sample.c}
-}
-\end{itembox}
-
-\begin{lstlisting}[caption=iterate ,label=list:1]
-(1..10).each do |i|
-	p i
-end
-\end{lstlisting}
-
-\lstinputlisting[caption=embed in list ,label=list:2]
+\lstinputlisting[caption=embed in listing ,label=list:2]
 {./sample.c}
 
-list\ref{list:2} shows \ldots{}
+\begin{center}
+\rule{3in}{0.4pt}
+\end{center}
+
+リストの場合、{\tt :}{\tt ref\{\textless{}label\textgreater{}\}} で参照を行うことができます。
+
+List \ref{list:2} shows \ldots{}
 
 \subsection{Tables}
 
-表は、仕切りに {\tt -} と {\tt \textbar{}} を使って表します
+To display table, we use pipe {\tt \textbar{}} and minus {\tt -}
 
 \begin{itembox}[c]{table example}
 \begin{verbatim}
@@ -304,13 +374,15 @@ aligned & aligned & aligned\\
 \end{tabular}
 \end{table}
 
-table\ref{table:1} shows \ldots{}
+表の場合、{\tt :}{\tt ref\{\textless{}label\textgreater{}\}} で参照を行うことができます。
+
+Table \ref{table:1} shows \ldots{}
 
 \subsection{Math Blocks}
 
 数式は\$\$で囲みます
 
-\begin{itembox}[c]{数式の例}
+\begin{itembox}[c]{equation example}
 \begin{verbatim}
 $$ inline math block $$
 
@@ -319,6 +391,8 @@ multiline math block
 $$
 \end{verbatim}
 \end{itembox}
+
+Output:
 
 解の公式は $ x = \frac{-b\pm\sqrt{b^2-4ac}}{2a} $ で表せます。
 式 $ \sum_{n = 1}^{\infty} \frac{1}{n} $ の収束値を求めます。
@@ -334,7 +408,7 @@ $$
 
 画像を埋め込む際は {\tt ![]()} を使います
 
-\begin{itembox}[c]{画像埋め込み例}
+\begin{itembox}[c]{example of displaying an image}
 \begin{verbatim}
 ![](/path/to/image.eps)
 :caption <caption> :scale <scale> :label <label>
@@ -343,7 +417,17 @@ $$
 
 \subsection{Horizontal Rules}
 
-ハイフンかアスタリスクを3つ以上並べると水平線が出力されます
+ハイフンかアスタリスクを4つ以上並べると水平線が出力されます
+
+\begin{itembox}[c]{horizontal rules example}
+\begin{verbatim}
+----
+
+****
+\end{verbatim}
+\end{itembox}
+
+Output:
 
 \begin{center}
 \rule{3in}{0.4pt}
@@ -352,5 +436,44 @@ $$
 \begin{center}
 \rule{3in}{0.4pt}
 \end{center}
+
+\subsection{Blockquotes}
+
+\begin{itembox}[c]{blockquotes example}
+\begin{verbatim}
+> This is a blockquote
+> on multiple line
+> but it looks one line
+\end{verbatim}
+\end{itembox}
+
+Output:
+
+This is para text.
+
+\begin{quote}
+This is a blockquote
+on multiple line
+but it looks one line
+\end{quote}
+
+List work in blockquotes
+
+\begin{quote}
+This is a blockquote
+* list work
+* item1
+* item2
+\end{quote}
+
+\subsection{Footnotes}
+
+This is some text.\footnote{This is \emph{italic} footnote.}. Other text.\footnote{You can use blockquotes.
+
+\begin{quote}
+Blockquotes can be in a footnote.
+\end{quote}}.
+
+% This text is completely ignored by kramdown - a comment in the text.
 
 \end{document}

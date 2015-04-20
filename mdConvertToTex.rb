@@ -81,17 +81,9 @@ $$ x = \frac{1}{2} $$
 <!-- mdに書いたtexの命令をtexの命令として実行したいときなどにお使いください -->
 
 # コメント
-<!--\if 0 コメント \fi-->
-
-# 注意
-
-そのまま出力できるのは1行のみです
-複数行のコメントは以下のように指定してください
-<!-- \if 0 -->
-
-... 複数行のコメント ...
-
-<!-- \fi -->
+{::comment}
+comment lines ...
+{:/comment}
 
 markdownと普通の文章の間には必ず空行を入れてください
 前後に空行がない場合はmd形式で書いても、普通の文章として扱います
@@ -174,7 +166,7 @@ def convert_title(latex_str)
 		subtitle = info[:subtitle] ? "\\\\{\\LARGE #{info[:subtitle]}}" : ""
 
 		$preamble << [
-			"\\title{ \\Huge #{info[:title]} #{subtitle}}",
+			"\\title{ \\Huge #{info[:title]} #{subtitle} }",
 			"\\author{ \\Large #{info[:author]} }",
 			"\\date{ \\Large #{info[:date]} }",
 		].join("\n") + "\n"
