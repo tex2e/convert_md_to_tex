@@ -101,7 +101,8 @@ markdownと普通の文章の間には必ず空行を入れてください
 def usage
 	puts <<-EOS.gsub(/^\s+\|/, '')
 		|usage: ruby #{$PROGRAM_NAME} <markdown_file> [-p]
-		|   -p  make pdf file
+		|
+		| -p, make pdf file
 	EOS
 end
 
@@ -116,6 +117,7 @@ write_file_path = md_file_path.sub(/\.[^.]+$/, '.tex')
 # プリアンブルの設定
 $preamble = <<EOP
 \\documentclass[a4j, titlepage]{jarticle}
+\\usepackage[utf8]{inputenc}
 \\usepackage{amsmath,amssymb} % 数式
 \\usepackage{fancybox,ascmac} % 丸枠
 \\usepackage[dvipdfmx]{graphicx} % 図

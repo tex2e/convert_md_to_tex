@@ -9,7 +9,7 @@
 :preamble
 	`\def\lstlistingname{List}`
 	`\def\tablename{Table}`
-	
+
 <!-- \fi -->
 
 Overview
@@ -18,9 +18,18 @@ Overview
 これはMarkdownファイルをTeXファイルに変換するためのrubyスクリプトです。
 rubyが実行できる環境と、gemの"kramdown"が必要です。
 
+# Requirements
+
+- Rubyの実行環境
+- gemの"kramdown"を使用
+
 # Usage
 
-	ruby <this_script> <md_file> [-p]
+次のコマンドを入力します
+
+	$ ruby <this_script> <md_file> [-p]
+
+
 
 # Structural Elements
 

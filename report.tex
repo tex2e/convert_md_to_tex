@@ -1,4 +1,5 @@
 \documentclass[a4j, titlepage]{jarticle}
+\usepackage[utf8]{inputenc}
 \usepackage{amsmath,amssymb} % 数式
 \usepackage{fancybox,ascmac} % 丸枠
 \usepackage[dvipdfmx]{graphicx} % 図
@@ -44,11 +45,20 @@
 これはMarkdownファイルをTeXファイルに変換するためのrubyスクリプトです。
 rubyが実行できる環境と、gemの''kramdown''が必要です。
 
+\section{Requirements}
+
+\begin{itemize}
+\item Rubyの実行環境
+\item gemの''kramdown''を使用
+\end{itemize}
+
 \section{Usage}
+
+次のコマンドを入力します
 
 \begin{screen}
 \begin{verbatim}
-ruby <this_script> <md_file> [-p]
+$ ruby <this_script> <md_file> [-p]
 \end{verbatim}
 \end{screen}
 
