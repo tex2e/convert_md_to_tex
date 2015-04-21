@@ -1,4 +1,127 @@
 
+def usage
+	puts <<-EOS.gsub(/^\s+\|/, '')
+		|usage: ruby #{$PROGRAM_NAME} <markdown_file> [-p]
+		|
+		| -p  make pdf file
+	EOS
+	exit
+end
+
+# store the file path and name
+class FileInfo
+	attr_reader :path, :name
+
+	def initialize
+		@path = {}
+		@name = {}
+	end
+
+	def set(dir, file, extension)
+		@path[extension.to_sym] = "#{dir}/#{file}.#{extension}"
+		@name[extension.to_sym] = "#{file}.#{extension}"
+	end
+end
+
+# get options
+require 'optparse'
+file_path = ARGV.last
+option = ARGV.getopts('p', 'pdf')
+
+usage unless file_path
+
+file = File.basename(file_path, '.*')
+dir = File.dirname(file_path)
+files = FileInfo.new
+
+files.set(dir, file, 'md')
+files.set(dir, file, 'tex')
+
+# set the preamble in latex
+$preamble = <<EOP
+\\documentclass[a4j, titlepage]{jarticle}
+\\usepackage[utf8]{inputenc}
+\\usepackage{amsmath,amssymb} % 数式
+\\usepackage{fancybox,ascmac} % 丸枠
+\\usepackage[dvipdfmx]{graphicx} % 図
+\\usepackage{verbatim} % ソースコードの埋め込み
+% プログラムリストで使用
+\\usepackage{ascmac}
+\\usepackage{here}
+\\usepackage{txfonts}
+\\usepackage{listings, jlisting} % プログラムリスト
+\\renewcommand{\\lstlistingname}{リスト}
+\\lstset{
+  language=c,
+  basicstyle=\\ttfamily\\small, % コードのフォントと文字サイズ
+  commentstyle=\\textit, % コメント部分のフォント
+  classoffset=1,
+  keywordstyle=\\bfseries,
+  frame=tRBl,
+  framesep=5pt,
+  showstringspaces=false,
+  numbers=left,
+  stepnumber=1,
+  numberstyle=\\footnotesize,
+  tabsize=3 % インデントの深さ（スペースの数）
+}
+EOP
+
+# convert from md to latex
+require 'kramdown'
+md_str = File.open(files.path[:md], &:read)
+latex_str = Kramdown::Document.new(md_str).to_latex
+
+require File.dirname(__FILE__) + '/customize_converting_rules.rb'
+latex_str = CustomizeConvertingRules.converts(latex_str)
+
+# texファイルに書き込み
+File.open(files.path[:tex], 'w') do |f|
+	puts "#{files.name[:md]} -> #{files.name[:tex]}"
+	tex_str = "#{$preamble}\n\\begin{document}\n#{latex_str}\\end{document}"
+	f.write tex_str
+end
+
+# ---------------------------------------------------------------------
+# -pオプションでpdfに変換する（-pが無ければ終了）
+if option['p'] || option['pdf']
+	files.set(dir, file, 'dvi')
+
+	puts "#{files.name[:tex]} -> #{files.name[:dvi]}"
+
+	n = 1
+	compile_times = -> n { ">> tex compile #{n} times" }
+
+	# platexによるコンパイルを行う
+	puts compile_times.call(n)
+	platex_result = %x(yes x | platex --kanji=utf8 #{files.path[:tex]})
+
+	# コンパイルが失敗したら、エラーの内容を出力して終了
+	if platex_result.match(/^\?/)
+		puts platex_result
+		exit
+	end
+
+	# コンパイルした際に「LaTeX Warning: label(s) may have changed.」が表示されたときは、再コンパイル
+	while platex_result.match(
+		"\n\nLaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.")
+		puts compile_times.call(n += 1)
+		platex_result = %x(platex --kanji=utf8 #{files.path[:tex]})
+	end
+
+	# platexによって生成されるdviファイルなどはカレントディレクトリに保存される
+	# dviファイルをpdfファイルに変換する
+	puts %x(dvipdfmx -d 5 #{files.name[:dvi]})
+
+	# カレントディレクトリにある生成されたファイル(dviやpdfなど)をmdファイルのあるディレクトリに移動させる
+	unless dir == '.'
+		file_types = %w(aux dvi log pdf)
+		file_types.each do |type|
+			%x(mv #{file}.#{type} #{dir})
+		end
+	end
+end
+
 =begin
 
 これはmarkdown(md)記法のファイルを読み込んで、tex形式に変換したファイルを出力します
@@ -89,112 +212,6 @@ markdownと普通の文章の間には必ず空行を入れてください
 前後に空行がない場合はmd形式で書いても、普通の文章として扱います
 
 =end
-
-def usage
-	puts <<-EOS.gsub(/^\s+\|/, '')
-		|usage: ruby #{$PROGRAM_NAME} <markdown_file> [-p]
-		|
-		| -p  make pdf file
-	EOS
-	exit
-end
-
-md_file_path, option = ARGV
-usage unless md_file_path
-
-write_file_path = md_file_path.sub(/\.[^.]+$/, '.tex')
-
-# プリアンブルの設定
-$preamble = <<EOP
-\\documentclass[a4j, titlepage]{jarticle}
-\\usepackage[utf8]{inputenc}
-\\usepackage{amsmath,amssymb} % 数式
-\\usepackage{fancybox,ascmac} % 丸枠
-\\usepackage[dvipdfmx]{graphicx} % 図
-\\usepackage{verbatim} % ソースコードの埋め込み
-% プログラムリストで使用
-\\usepackage{ascmac}
-\\usepackage{here}
-\\usepackage{txfonts}
-\\usepackage{listings, jlisting} % プログラムリスト
-\\renewcommand{\\lstlistingname}{リスト}
-\\lstset{
-  language=c,
-  basicstyle=\\ttfamily\\small, % コードのフォントと文字サイズ
-  commentstyle=\\textit, % コメント部分のフォント
-  classoffset=1,
-  keywordstyle=\\bfseries,
-  frame=tRBl,
-  framesep=5pt,
-  showstringspaces=false,
-  numbers=left,
-  stepnumber=1,
-  numberstyle=\\footnotesize,
-  tabsize=3 % インデントの深さ（スペースの数）
-}
-EOP
-
-# mdファイルを読み込んで、texの文字列に変換する
-require 'kramdown'
-md_str = File.open(md_file_path, &:read)
-latex_str = Kramdown::Document.new(md_str).to_latex
-
-require "#{File.dirname(__FILE__)}/customize_converting_rules.rb"
-latex_str = CustomizeConvertingRules.converts(latex_str)
-
-# texファイルに書き込み
-File.open(write_file_path, 'w') do |f|
-	tex_str = "#{$preamble}\n\\begin{document}\n#{latex_str}\\end{document}"
-	f.write tex_str
-end
-
-# ---------------------------------------------------------------------
-# -pオプションでpdfに変換する（-pが無ければ終了）
-if option == '-p'
-	# mdファイルが置いてあるディレクトリを変数として保存
-	match = write_file_path.match(%r{^([/~]?(?:[^/]+/)*)([-\w\.]+?)\.tex})
-	workspace_dir = match[1]
-	file_name     = match[2]
-	tex_file_path = workspace_dir + file_name + '.tex'
-	# dvi_file_path = workspace_dir + file_name + '.dvi'
-	tex_file_name = file_name + '.tex'
-	dvi_file_name = file_name + '.dvi'
-
-	puts "#{tex_file_name} -> #{dvi_file_name}"
-
-	n = 1
-	print_compile_time = -> n { ">> tex compile #{n} time" }
-
-	# platexによるコンパイルを行う
-	puts print_compile_time.call(n)
-	platex_result = %x(yes x | platex --kanji=utf8 #{tex_file_path})
-
-	# コンパイルが失敗したら、エラーの内容を出力して終了
-	if platex_result.match(/^\?/)
-		puts platex_result#.sub(/(?:[^\n]+|\n[^\n])+\n/, '').gsub(/^\(.*\n/, '')
-		exit
-	end
-
-	# コンパイルした際に「LaTeX Warning: label(s) may have changed.」が表示されたときは、再コンパイル
-	while platex_result.match(
-		"\n\nLaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.")
-		puts print_compile_time.call(n += 1)
-		platex_result = %x(platex --kanji=utf8 #{tex_file_path})
-	end
-
-	# platexによって生成されるdviファイルなどはカレントディレクトリに保存される
-	# dviファイルをpdfファイルに変換する
-	puts %x(dvipdfmx -d 5 #{dvi_file_name})
-
-	# カレントディレクトリにある生成されたファイル(dviやpdfなど)をmdファイルのあるディレクトリに移動させる
-	unless workspace_dir.empty?
-		file_types = %w(aux dvi log pdf)
-		file_types.each do |type|
-			%x(mv #{file_name}.#{type} #{workspace_dir})
-		end
-	end
-end
-
 
 
 
