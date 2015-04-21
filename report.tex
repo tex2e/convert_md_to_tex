@@ -72,7 +72,7 @@ enter the following commands:
 
 \begin{screen}
 \begin{verbatim}
-$ ruby <this_script> <md_file> [-p]
+$ ruby <this_script> [-optsions] <md_file>
 \end{verbatim}
 \end{screen}
 
@@ -85,7 +85,16 @@ $ ruby <this_script> <md_file> [-p]
 
 
 
+\item[{\tt -options}]\mbox{}\\ optionには次のものがあります
+
+
+\begin{description}
 \item[{\tt -p}]\mbox{}\\ texに変換した後、pdfに変換するオプション
+
+
+
+\item[{\tt --pdf}]\mbox{}\\ 同上
+\end{description}
 \end{description}
 
 \section{Structural Elements}
@@ -453,18 +462,21 @@ This is para text.
 
 \begin{quote}
 This is a blockquote
-on multiple line
-but it looks one line
+on multiple line.
+but it looks like one line
 \end{quote}
 
 List work in blockquotes
 
-\begin{quote}
+\begin{quotation}
 This is a blockquote
-* list work
-* item1
-* item2
-\end{quote}
+
+\begin{itemize}
+\item list work
+\item item1
+\item item2
+\end{itemize}
+\end{quotation}
 
 \subsection{Footnotes}
 
@@ -473,6 +485,8 @@ This is some text.\footnote{This is \emph{italic} footnote.}. Other text.\footno
 \begin{quote}
 Blockquotes can be in a footnote.
 \end{quote}}.
+
+\subsection{Comments}
 
 % This text is completely ignored by kramdown - a comment in the text.
 

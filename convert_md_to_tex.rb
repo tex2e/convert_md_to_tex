@@ -1,12 +1,20 @@
 
 def usage
 	puts <<-EOS.gsub(/^\s+\|/, '')
-		|usage: ruby #{$PROGRAM_NAME} <markdown_file> [-p]
+		|Usage: ruby #{$PROGRAM_NAME} <options> <markdown_file>
 		|
-		| -p  make pdf file
+		|    -p         make pdf file
+		|    --pdf      make pdf file
 	EOS
 	exit
 end
+
+# get options
+require 'optparse'
+file_path = ARGV.last
+option = ARGV.getopts('p', 'pdf')
+
+usage if file_path.nil? || File.exist?(file_path) == false
 
 # store the file path and name
 class FileInfo
@@ -22,13 +30,6 @@ class FileInfo
 		@name[extension.to_sym] = "#{file}.#{extension}"
 	end
 end
-
-# get options
-require 'optparse'
-file_path = ARGV.last
-option = ARGV.getopts('p', 'pdf')
-
-usage unless file_path
 
 file = File.basename(file_path, '.*')
 dir = File.dirname(file_path)
@@ -86,7 +87,6 @@ end
 # -pオプションでpdfに変換する（-pが無ければ終了）
 if option['p'] || option['pdf']
 	files.set(dir, file, 'dvi')
-
 	puts "#{files.name[:tex]} -> #{files.name[:dvi]}"
 
 	n = 1
@@ -129,7 +129,7 @@ end
 # 使用方法
 
 このファイルをrubyで実行します
-$ ruby <this_file> <markdown_file> [-p]
+$ ruby <this_file> [-p] <markdown_file>
 
 <this_file> はこのrubyのソースファイルのパスです
 <markdown_file> はmdファイルのパスです
@@ -137,7 +137,7 @@ $ ruby <this_file> <markdown_file> [-p]
 -p オプションで追加の変換 tex -> pdf も行います
 
 例:
-	$ ruby mdConvertToTex.rb report.md -p
+	$ ruby convert_md_to_tex.rb -p report.md
 
 # ソースコード (スペース4つ以上のインデント)
 ## 枠のみ

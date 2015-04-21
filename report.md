@@ -35,7 +35,7 @@ then enter `bundle` command to install ``kramdown"
 
 enter the following commands:
 
-	$ ruby <this_script> <md_file> [-p]
+	$ ruby <this_script> [-optsions] <md_file>
 
 `<this_script>`
 : mdをtexに変換するスクリプトのファイル名
@@ -43,8 +43,14 @@ enter the following commands:
 `<md_file>`
 : 変換元となるmarkdownファイル
 
-`-p`
-: texに変換した後、pdfに変換するオプション
+`-options`
+: optionには次のものがあります
+
+  `-p`
+  : texに変換した後、pdfに変換するオプション
+
+  `--pdf`
+  : 同上
 
 # Structural Elements
 
@@ -329,15 +335,17 @@ Output:
 This is para text.
 
 > This is a blockquote
-> on multiple line
-> but it looks one line
+> on multiple line.
+> but it looks like one line
 
 List work in blockquotes
 
 > This is a blockquote
+>
 > * list work
 > * item1
 > * item2
+>
 
 ## Footnotes
 
@@ -350,6 +358,7 @@ This is some text.[^1]. Other text.[^footnote].
 
 	> Blockquotes can be in a footnote.
 
+## Comments
 
 {::comment}
 This text is completely ignored by kramdown - a comment in the text.
