@@ -230,7 +230,7 @@ module CustomizeConvertingRules
 	# :cmd{} -> \cmd{}
 	# バックスラッシュ\から始まるコマンド名に変換する
 	def convert_command(latex_str)
-		latex_str.gsub!(/:(\w+)\\\{(.*?)\\\}/, '\\\\\\1{\2\4}\3')
+		latex_str.gsub!(/:ref\\\{(.*?)\\\}/, '\\\\ref{\1}')
 		latex_str
 	end
 end

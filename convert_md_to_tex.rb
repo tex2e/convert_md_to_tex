@@ -12,7 +12,12 @@ end
 # get options
 require 'optparse'
 file_path = ARGV.last
-option = ARGV.getopts('p', 'pdf')
+option = ARGV.getopts('p', 'pdf', 'sample')
+
+if option['sample']
+	puts File.open(File.dirname(__FILE__) + '/sample.md', &:read)
+	exit
+end
 
 usage if file_path.nil? || File.exist?(file_path) == false
 
@@ -104,7 +109,7 @@ if option['p'] || option['pdf']
 
 	# コンパイルした際に「LaTeX Warning: label(s) may have changed.」が表示されたときは、再コンパイル
 	while platex_result.match(
-		"\n\nLaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.")
+		/^LaTeX Warning: Label\(s\) may have changed. Rerun to get cross-references right\./)
 		puts compile_times.call(n += 1)
 		platex_result = %x(platex --kanji=utf8 #{files.path[:tex]})
 	end
