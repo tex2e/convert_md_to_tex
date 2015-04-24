@@ -2,9 +2,9 @@
 def usage
 	puts <<-EOS.gsub(/^\s+\|/, '')
 		|Usage: ruby #{$PROGRAM_NAME} <options> <markdown_file>
-		|
 		|    -p         make pdf file
 		|    --pdf      make pdf file
+		|    --sample   create sample markdown file
 	EOS
 	exit
 end

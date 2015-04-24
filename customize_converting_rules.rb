@@ -18,6 +18,12 @@ module CustomizeConvertingRules
 		latex_str
 	end
 
+	# pathに使用する文字（アンダースコア）は、\_ とする。
+	def convert_under_score_to_no_escape(latex_str)
+		latex_str.gsub!(/\\textbackslash{}\\_/, '_')
+		latex_str
+	end
+
 	# :title -> \title{}
 	# タイトルの作成
 	# 1. :title ~ をキャプチャする
@@ -96,7 +102,7 @@ module CustomizeConvertingRules
 		latex_str.gsub!(
 			/^
 				:caption\s+([^:]*)\n?(?::label\s+([^\n]*))?\n
-				\s*\\href{([^}]*)}{embed}
+				\s*\\href\{([^}]*)\}\{embed\}
 			/mx,
 			%w(
 				\begin{itembox}[c]{\1}
@@ -137,7 +143,7 @@ module CustomizeConvertingRules
 		latex_str.gsub!(
 			/^
 				:caption\s+([^:]*)\n?(?::label\s+([^\n]*))?\n
-				:listing\s*\\href{([^}]*)}{embed}
+				:listing\s*\\href\{([^}]*)\}\{embed\}
 			/mx,
 			%w(
 				\lstinputlisting[caption=\1,label=\2]
@@ -231,6 +237,16 @@ module CustomizeConvertingRules
 	# バックスラッシュ\から始まるコマンド名に変換する
 	def convert_command(latex_str)
 		latex_str.gsub!(/:ref\\\{(.*?)\\\}/, '\\\\ref{\1}')
+		latex_str
+	end
+
+	def convert_alias(latex_str)
+		aliases = latex_str.scan(/^:alias\s++([^=]+)\s+=\s++(.*)/)
+		aliases.each do |_alias|
+			p from = _alias[0]
+			p to   = _alias[1]
+			latex_str.gsub!(/\b#{from}\b/, to)
+		end
 		latex_str
 	end
 end
