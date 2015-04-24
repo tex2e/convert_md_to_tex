@@ -364,6 +364,10 @@ This is some text.[^1]. Other text.[^footnote].
 This text is completely ignored by kramdown - a comment in the text.
 {:/comment}
 
+## Alias
 
+:alias alias test = hoge fuga piyo
+
+(alias test)
 
 

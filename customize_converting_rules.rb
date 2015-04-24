@@ -241,10 +241,12 @@ module CustomizeConvertingRules
 	end
 
 	def convert_alias(latex_str)
-		aliases = latex_str.scan(/^:alias\s++([^=]+)\s+=\s++(.*)/)
+		aliases = latex_str.scan(/^(:alias\s++([^=]+)\s+=\s++(.*)\n)/)
 		aliases.each do |_alias|
-			p from = _alias[0]
-			p to   = _alias[1]
+			this = _alias[0]
+			from = _alias[1]
+			to   = _alias[2]
+			latex_str.gsub!(/^#{this}/, '')
 			latex_str.gsub!(/\b#{from}\b/, to)
 		end
 		latex_str
