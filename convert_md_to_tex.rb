@@ -1,7 +1,24 @@
+# 
+# Name: convert_md_to_tex.rb
+# 
+# Convert Markdown to TeX
+# 
+# Usage: ruby convert_md_to_tex.rb <options> <markdown_file>
+# 
+# Author: Mako
+# Date: 2015/5/10
+
+# this ruby script needs 'kramdown'
+if %x(gem list | grep kramdown).empty?
+	puts "> gem install kramdown"
+	puts %x(gem install kramdown)
+	puts "[finished]"
+	exit
+end
 
 def usage
 	puts <<-EOS.gsub(/^\s+\|/, '')
-		|Usage: ruby #{$PROGRAM_NAME} <options> <markdown_file>
+		|Usage: ruby convert_md_to_tex.rb <options> <markdown_file>
 		|    -p         make pdf file
 		|    --pdf      make pdf file
 		|    --sample   create sample markdown file
